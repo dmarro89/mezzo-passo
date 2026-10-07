@@ -10,9 +10,26 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mezzo_passo
+          POSTGRES_USER: mezzo
+          POSTGRES_PASSWORD: mezzo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mezzo -d mezzo_passo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: backend
+    env:
+      DATABASE_URL: postgres://mezzo:mezzo@localhost:5432/mezzo_passo?sslmode=disable
+      PORT: "8080"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -23,6 +40,22 @@ jobs:
         run: go mod tidy
       - name: Test
         run: go test ./...
+      - name: Smoke test API and database seed
+        run: |
+          go run ./cmd/api >/tmp/mezzo-passo-api.log 2>&1 &
+          PID=$!
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
+              curl --fail --silent                 -X POST http://127.0.0.1:8080/api/v1/demo/login                 -H 'Content-Type: application/json'                 -d '{"role":"capoparanza"}' >/dev/null
+              kill $PID
+              wait $PID || true
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mezzo-passo-api.log
+          kill $PID || true
+          exit 1
 
   mobile:
     runs-on: ubuntu-latest
