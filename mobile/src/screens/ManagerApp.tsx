@@ -96,7 +96,7 @@ function Home({
 }) {
   const next = events[0];
   return (
-    <Screen key="manager-home">
+    <Screen key="manager-home" withBottomNav>
       <View style={styles.homeHeader}>
         <HeaderButton icon="chevron-back" />
         <Brand compact />
@@ -237,7 +237,7 @@ function Events({
   }
 
   return (
-    <Screen key="manager-events">
+    <Screen key="manager-events" withBottomNav>
       <View style={styles.headerRow}>
         <Title>Eventi</Title>
         <HeaderButton icon="add" onPress={() => setCreating(true)} />
@@ -300,7 +300,7 @@ function Messages({
   }
 
   return (
-    <Screen key="manager-messages">
+    <Screen key="manager-messages" withBottomNav>
       <View style={styles.headerRow}>
         <Title>Messaggi</Title>
         <HeaderButton icon="add" onPress={() => setComposing(true)} />
@@ -396,7 +396,7 @@ function Members() {
   );
 
   return (
-    <Screen key="manager-members">
+    <Screen key="manager-members" withBottomNav>
       <PageHeader title="I miei cullatori" actionIcon="add" />
       <View style={styles.search}>
         <Ionicons name="search-outline" size={16} color={theme.colors.muted} />
@@ -431,7 +431,7 @@ function Stats({
   onLogout: () => void;
 }) {
   return (
-    <Screen key="manager-stats">
+    <Screen key="manager-stats" withBottomNav>
       <PageHeader title="Statistiche" />
       <Card>
         <Text style={styles.statsTitle}>Tasso di presenza</Text>
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   homeHeader: {
-    minHeight: 34,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -609,25 +609,25 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.8,
   },
-  subtle: { color: theme.colors.text, fontSize: 13, lineHeight: 18 },
-  metricRows: { gap: 7 },
-  metricRow: { flexDirection: "row", gap: 7 },
+  subtle: { color: theme.colors.text, fontSize: 15, lineHeight: 21 },
+  metricRows: { gap: 10 },
+  metricRow: { flexDirection: "row", gap: 10 },
   blockLabel: {
     color: theme.colors.blueDark,
     fontSize: 12,
     fontWeight: "900",
   },
-  eventTypeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  eventTypeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   eventType: {
     width: "48.8%",
-    minHeight: 46,
-    borderRadius: 8,
+    minHeight: 64,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    paddingHorizontal: 9,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 7,
+    gap: 10,
   },
   eventTypeSelected: {
     borderColor: theme.colors.blue,
@@ -636,24 +636,24 @@ const styles = StyleSheet.create({
   eventTypeText: {
     flex: 1,
     color: theme.colors.text,
-    fontSize: 9.5,
+    fontSize: 13,
     fontWeight: "700",
   },
-  detailPair: { flexDirection: "row", gap: 7 },
+  detailPair: { flexDirection: "row", gap: 10 },
   detailBox: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 8,
+    minHeight: 62,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    paddingHorizontal: 9,
+    paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     backgroundColor: "#FFFFFF",
   },
-  detailLabel: { color: theme.colors.muted, fontSize: 11, fontWeight: "700" },
-  detailValue: { color: theme.colors.blueDark, fontSize: 13, fontWeight: "800" },
+  detailLabel: { color: theme.colors.muted, fontSize: 12, fontWeight: "700" },
+  detailValue: { color: theme.colors.blueDark, fontSize: 15, fontWeight: "800" },
   confirmRow: {
     minHeight: 50,
     flexDirection: "row",
@@ -661,18 +661,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     gap: 12,
   },
-  confirmLabel: { color: theme.colors.text, fontSize: 13, fontWeight: "700" },
+  confirmLabel: { color: theme.colors.text, fontSize: 15, fontWeight: "700" },
   flexSpacer: { flex: 1, minHeight: 2 },
-  recipientRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  recipientRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   counter: {
     color: theme.colors.muted,
     fontSize: 9,
     textAlign: "right",
     marginTop: -6,
   },
-  body: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
-  cardStrong: { color: theme.colors.blueDark, fontSize: 14, fontWeight: "900" },
-  dateText: { color: theme.colors.muted, fontSize: 11 },
+  body: { color: theme.colors.text, fontSize: 15, lineHeight: 22 },
+  cardStrong: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
+  dateText: { color: theme.colors.muted, fontSize: 12 },
   participantMeta: {
     color: theme.colors.blue,
     textAlign: "center",
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     marginTop: -7,
   },
   segmentHeader: {
-    minHeight: 38,
+    minHeight: 44,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.line,
     flexDirection: "row",
@@ -696,36 +696,36 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.blue,
     paddingBottom: 10,
   },
-  segmentInactive: { color: theme.colors.text, fontSize: 13, paddingBottom: 10 },
-  responseRow: { flexDirection: "row", gap: 7 },
+  segmentInactive: { color: theme.colors.text, fontSize: 14, paddingBottom: 10 },
+  responseRow: { flexDirection: "row", gap: 10 },
   responseBox: {
     flex: 1,
-    minHeight: 54,
-    borderRadius: 8,
+    minHeight: 66,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
-  responseValue: { fontSize: 22, fontWeight: "900" },
-  responseLabel: { fontSize: 11, fontWeight: "700" },
+  responseValue: { fontSize: 25, fontWeight: "900" },
+  responseLabel: { fontSize: 12, fontWeight: "700" },
   search: {
-    height: 46,
+    height: 50,
     borderRadius: 9,
     backgroundColor: "#F1F5FA",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
-    gap: 7,
+    paddingHorizontal: 12,
+    gap: 10,
   },
-  searchPlaceholder: { color: theme.colors.muted, fontSize: 12.5 },
+  searchPlaceholder: { color: theme.colors.muted, fontSize: 14 },
   personRow: {
-    minHeight: 58,
+    minHeight: 66,
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: 12,
   },
-  personName: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
-  personPosition: { color: theme.colors.text, fontSize: 11 },
-  statsTitle: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
+  personName: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
+  personPosition: { color: theme.colors.text, fontSize: 13 },
+  statsTitle: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "900" },
   bigRing: {
     width: 118,
     height: 118,
@@ -756,7 +756,7 @@ const styles = StyleSheet.create({
   },
   chartColumn: { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 4 },
   chartBar: { width: 17, backgroundColor: theme.colors.blue },
-  chartLabel: { color: theme.colors.text, fontSize: 11 },
+  chartLabel: { color: theme.colors.text, fontSize: 12 },
   chartAxis: {
     position: "absolute",
     right: 0,
@@ -764,9 +764,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "space-between",
   },
-  axisLabel: { color: theme.colors.muted, fontSize: 9.5 },
+  axisLabel: { color: theme.colors.muted, fontSize: 10.5 },
   pageHeader: {
-    minHeight: 34,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -776,18 +776,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "900",
   },
-  eventRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  eventRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   dateBadge: {
     width: 48,
     height: 58,
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
     justifyContent: "center",
   },
-  dateWeek: { color: theme.colors.blue, fontSize: 10, fontWeight: "900" },
-  dateDay: { color: theme.colors.blueDark, fontSize: 22, lineHeight: 23, fontWeight: "900" },
-  dateMonth: { color: theme.colors.blue, fontSize: 10, fontWeight: "900" },
+  dateWeek: { color: theme.colors.blue, fontSize: 11, fontWeight: "900" },
+  dateDay: { color: theme.colors.blueDark, fontSize: 25, lineHeight: 27, fontWeight: "900" },
+  dateMonth: { color: theme.colors.blue, fontSize: 11, fontWeight: "900" },
   participantsInline: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
-  peopleText: { color: theme.colors.blue, fontSize: 11, fontWeight: "700" },
+  peopleText: { color: theme.colors.blue, fontSize: 12, fontWeight: "700" },
 });
