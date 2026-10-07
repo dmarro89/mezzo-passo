@@ -165,7 +165,7 @@ export function Button({
       {icon ? (
         <Ionicons
           name={icon}
-          size={17}
+          size={19}
           color={
             variant === "primary"
               ? "#FFFFFF"
@@ -259,7 +259,7 @@ export function Field({
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <View style={[styles.inputShell, multiline && styles.inputMultiline]}>
-        {icon ? <Ionicons name={icon} size={17} color={theme.colors.blue} /> : null}
+        {icon ? <Ionicons name={icon} size={19} color={theme.colors.blue} /> : null}
         <TextInput
           style={[styles.input, multiline && { minHeight: 76, textAlignVertical: "top" }]}
           value={value}
@@ -349,7 +349,7 @@ export function BottomNav({
             >
               <Ionicons
                 name={selected ? item.iconActive ?? item.icon : item.icon}
-                size={19}
+                size={21}
                 color={selected ? theme.colors.blue : theme.colors.muted}
               />
               <Text style={[styles.navLabel, selected && styles.navLabelActive]}>
@@ -420,7 +420,7 @@ export function HeaderButton({
       onPress={onPress}
       style={styles.headerButton}
     >
-      <Ionicons name={icon} size={19} color={theme.colors.blue} />
+      <Ionicons name={icon} size={21} color={theme.colors.blue} />
       {badge ? <View style={styles.headerBadge} /> : null}
     </Pressable>
   );
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   metric: {
     flex: 1,
     minWidth: 72,
-    minHeight: 84,
+    minHeight: 100,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
     borderWidth: 1,
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.line,
   },
   nav: {
-    minHeight: 58,
+    minHeight: 66,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   },
   navItem: {
     flex: 1,
-    minHeight: 55,
+    minHeight: 62,
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
