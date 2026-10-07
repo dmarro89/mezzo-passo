@@ -1,3 +1,4 @@
+export const PERSON_IMAGE = require("../assets/mock-person.jpg");
 export const WELCOME_IMAGE = require("../assets/mock-welcome.jpg");
 export const EVENT_IMAGE = require("../assets/mock-event.jpg");
 export const BANNER_IMAGE = require("../assets/mock-banner.jpg");
