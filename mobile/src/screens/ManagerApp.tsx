@@ -98,7 +98,7 @@ function Home({
   return (
     <Screen key="manager-home" withBottomNav>
       <View style={styles.homeHeader}>
-        <HeaderButton icon="chevron-back" />
+        <View style={styles.headerSpacer} />
         <Brand compact />
         <HeaderButton icon="settings-outline" />
       </View>
@@ -169,7 +169,7 @@ function Events({
               >
                 <Ionicons
                   name={item.icon}
-                  size={18}
+                  size={21}
                   color={selected ? theme.colors.blue : theme.colors.blueDark}
                 />
                 <Text style={[styles.eventTypeText, selected && { color: theme.colors.blue }]}>
@@ -206,6 +206,7 @@ function Events({
 
         <View style={styles.flexSpacer} />
         <Button
+          large
           title="Crea evento"
           onPress={() => {
             const start = new Date();
@@ -280,6 +281,7 @@ function Messages({
         <Text style={styles.counter}>{body.length}/500</Text>
         <View style={styles.flexSpacer} />
         <Button
+          large
           title="Invia messaggio"
           onPress={() => {
             setMessages((current) => [
@@ -357,13 +359,13 @@ function ParticipantsView({
       </View>
 
       <View style={styles.search}>
-        <Ionicons name="search-outline" size={16} color={theme.colors.muted} />
+        <Ionicons name="search-outline" size={18} color={theme.colors.muted} />
         <Text style={styles.searchPlaceholder}>Cerca un cullatore...</Text>
       </View>
 
       {participants.map((p) => (
         <View key={p.userId} style={styles.personRow}>
-          <Avatar initials={initials(p.name)} size={34} />
+          <Avatar initials={initials(p.name)} size={44} />
           <View style={{ flex: 1 }}>
             <Text style={styles.personName}>{p.name}</Text>
             <Text style={styles.personPosition}>{p.position}</Text>
@@ -378,7 +380,7 @@ function ParticipantsView({
                   : "danger"
             }
           />
-          <Ionicons name="ellipsis-horizontal" size={16} color={theme.colors.blue} />
+          <Ionicons name="ellipsis-horizontal" size={21} color={theme.colors.blue} />
         </View>
       ))}
     </Screen>
@@ -399,7 +401,7 @@ function Members() {
     <Screen key="manager-members" withBottomNav>
       <PageHeader title="I miei cullatori" actionIcon="add" />
       <View style={styles.search}>
-        <Ionicons name="search-outline" size={16} color={theme.colors.muted} />
+        <Ionicons name="search-outline" size={18} color={theme.colors.muted} />
         <Text style={styles.searchPlaceholder}>Cerca un cullatore...</Text>
       </View>
       <View style={styles.recipientRow}>
@@ -410,13 +412,13 @@ function Members() {
 
       {filtered.map((member) => (
         <View key={member.userId} style={styles.personRow}>
-          <Avatar initials={initials(member.name)} size={34} />
+          <Avatar initials={initials(member.name)} size={44} />
           <View style={{ flex: 1 }}>
             <Text style={styles.personName}>{member.name}</Text>
             <Text style={styles.personPosition}>{member.position}</Text>
           </View>
           <Pill label={member.isActive ? "Attivo" : "Non attivo"} tone={member.isActive ? "success" : "default"} />
-          <Ionicons name="ellipsis-horizontal" size={16} color={theme.colors.blue} />
+          <Ionicons name="ellipsis-horizontal" size={21} color={theme.colors.blue} />
         </View>
       ))}
     </Screen>
@@ -486,10 +488,10 @@ function PageHeader({
       {onBack ? (
         <HeaderButton icon="chevron-back" onPress={onBack} />
       ) : (
-        <HeaderButton icon="chevron-back" />
+        <View style={styles.headerSpacer} />
       )}
       <Text style={styles.pageHeaderTitle}>{title}</Text>
-      {actionIcon ? <HeaderButton icon={actionIcon} /> : <View style={{ width: 30 }} />}
+      {actionIcon ? <HeaderButton icon={actionIcon} /> : <View style={styles.headerSpacer} />}
     </View>
   );
 }
@@ -563,7 +565,7 @@ function EventRow({ event }: { event: EventItem }) {
           <Text style={styles.peopleText}>{event.participantCount} partecipanti</Text>
         </View>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={theme.colors.blue} />
+      <Ionicons name="chevron-forward" size={21} color={theme.colors.blue} />
     </View>
   );
 }
@@ -591,6 +593,7 @@ function statusLabel(status: Participant["status"]) {
 }
 
 const styles = StyleSheet.create({
+  headerSpacer: { width: 38, height: 38 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -604,8 +607,8 @@ const styles = StyleSheet.create({
   },
   hello: {
     color: theme.colors.blueDark,
-    fontSize: 26,
-    lineHeight: 29,
+    fontSize: 30,
+    lineHeight: 35,
     fontWeight: "900",
     letterSpacing: -0.8,
   },
@@ -614,7 +617,7 @@ const styles = StyleSheet.create({
   metricRow: { flexDirection: "row", gap: 10 },
   blockLabel: {
     color: theme.colors.blueDark,
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: "900",
   },
   eventTypeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
@@ -676,8 +679,8 @@ const styles = StyleSheet.create({
   participantMeta: {
     color: theme.colors.blue,
     textAlign: "center",
-    fontSize: 10,
-    lineHeight: 15,
+    fontSize: 13,
+    lineHeight: 19,
     marginTop: -7,
   },
   segmentHeader: {
@@ -690,7 +693,7 @@ const styles = StyleSheet.create({
   },
   segmentActive: {
     color: theme.colors.blue,
-    fontSize: 12,
+    fontSize: 19,
     fontWeight: "900",
     borderBottomWidth: 2,
     borderBottomColor: theme.colors.blue,
@@ -741,8 +744,8 @@ const styles = StyleSheet.create({
   bigRingValue: { color: theme.colors.blueDark, fontSize: 28, fontWeight: "900" },
   statsCaption: {
     color: theme.colors.text,
-    fontSize: 10,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 18,
     textAlign: "center",
   },
   chartWrap: {
@@ -778,8 +781,8 @@ const styles = StyleSheet.create({
   },
   eventRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   dateBadge: {
-    width: 48,
-    height: 58,
+    width: 58,
+    height: 70,
     borderRadius: 12,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
