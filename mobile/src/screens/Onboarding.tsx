@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  ImageBackground,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -34,16 +34,17 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
   if (step === "welcome") {
     return (
       <View style={styles.welcomeRoot}>
-        <ImageBackground
-          source={WELCOME_IMAGE}
-          style={styles.welcomeImage}
-          resizeMode="cover"
-        >
+        <View style={styles.welcomeImage}>
+          <Image
+            source={WELCOME_IMAGE}
+            resizeMode="cover"
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.welcomeShade} />
           <View style={styles.welcomeBrand}>
             <Brand light />
           </View>
-        </ImageBackground>
+        </View>
 
         <View style={styles.loginSheet}>
           <Text style={styles.loginTitle}>Benvenuto su Mezzo Passo</Text>
