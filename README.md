@@ -42,7 +42,7 @@ Prerequisiti:
 
 - Docker
 - Go 1.24+
-- Node.js 20.19.4+
+- Node.js 22.13+
 - Expo Go sul telefono, se vuoi provarlo su dispositivo fisico
 
 ### 1. Database
@@ -57,7 +57,7 @@ docker compose up -d db
 cd backend
 cp .env.example .env
 export DATABASE_URL='postgres://mezzo:mezzo@localhost:5432/mezzo_passo?sslmode=disable'
-go run ./cmd/api
+go mod tidy\ngo run ./cmd/api
 ```
 
 Verifica:
