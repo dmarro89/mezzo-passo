@@ -24,6 +24,7 @@ import {
   Card,
   HeaderButton,
   Metric,
+  ParanzaLogo,
   Pill,
   Screen,
   SectionTitle,
@@ -336,7 +337,7 @@ function Profile({ onLogout }: { onLogout: () => void }) {
 
       <Card>
         <View style={styles.profileParanza}>
-          <Banner />
+          <ParanzaLogo size={48} />
           <View style={styles.profileParanzaCopy}>
             <Text style={styles.personName}>Orgoglio Nolano</Text>
             <Text style={styles.subtle}>Capoparanza{"\n"}Luca Iorio</Text>
