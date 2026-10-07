@@ -1,0 +1,47 @@
+name: ui-snapshots
+
+on:
+  push:
+    branches:
+      - "mvp/**"
+    paths:
+      - "mobile/**"
+      - ".github/workflows/ui-snapshots.yml"
+  workflow_dispatch:
+
+jobs:
+  snapshots:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.1"
+      - name: Install app dependencies
+        run: npm install
+      - name: Install web and Playwright dependencies
+        run: |
+          npx expo install react-dom react-native-web @expo/metro-runtime
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps chromium
+      - name: Start Expo web
+        run: |
+          nohup npx expo start --web --port 19006 > /tmp/expo.log 2>&1 &
+          for i in {1..60}; do
+            if curl --fail --silent http://127.0.0.1:19006 >/dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/expo.log
+          exit 1
+      - name: Capture UI snapshots
+        run: node e2e/ui-snapshots.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mezzo-passo-ui-snapshots
+          path: mobile/artifacts/ui
+          retention-days: 3
