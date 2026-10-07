@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: mezzo_passo
+      POSTGRES_USER: mezzo
+      POSTGRES_PASSWORD: mezzo
+    ports:
+      - "5432:5432"
+    volumes:
+      - mezzo_passo_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mezzo -d mezzo_passo"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  mezzo_passo_pg:
