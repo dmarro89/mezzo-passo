@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   welcomeRoot: { flex: 1, backgroundColor: "#FFFFFF" },
   welcomeImage: { flex: 1, minHeight: 430, justifyContent: "flex-start" },
   welcomeShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,31,78,0.20)",
   },
   welcomeBrand: { alignSelf: "center", marginTop: 58 },
