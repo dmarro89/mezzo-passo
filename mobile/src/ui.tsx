@@ -688,6 +688,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   avatar: {
+    overflow: "hidden",
     backgroundColor: "#EAF1FB",
     borderWidth: 1,
     borderColor: "#DDE6F3",
