@@ -109,7 +109,8 @@ function Home({
   const next = events[0];
   return (
     <Screen key="cullatore-home">
-      <View style={styles.headerRow}>
+      <View style={styles.homeHeader}>
+        <HeaderButton icon="chevron-back" />
         <Brand compact />
         <HeaderButton icon="notifications-outline" badge onPress={onNotifications} />
       </View>
@@ -541,6 +542,12 @@ function NotificationRow({
 
 const styles = StyleSheet.create({
   headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  homeHeader: {
+    minHeight: 34,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
