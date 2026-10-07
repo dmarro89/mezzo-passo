@@ -350,7 +350,7 @@ function MiniStat({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create({
   welcomeRoot: { flex: 1, backgroundColor: "#FFFFFF" },
-  welcomeImage: { height: 520, justifyContent: "flex-start", overflow: "hidden" },
+  welcomeImage: { flex: 1.15, minHeight: 380, justifyContent: "flex-start", overflow: "hidden" },
   welcomeShade: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,31,78,0.20)",
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
   },
   loginTitle: {
     color: theme.colors.blueDark,
-    fontSize: 18,
+    fontSize: 21,
     fontWeight: "900",
     textAlign: "center",
   },
@@ -391,11 +391,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    minHeight: 34,
+    minHeight: 42,
   },
   pushBottom: { flex: 1, minHeight: 8 },
   pushTop: { flex: 0.4 },
-  roleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  roleRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   roleSelected: { borderColor: theme.colors.blue, borderWidth: 1.8 },
   roleIcon: {
     width: 42,
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#C8D1DD",
   },
-  smallBody: { color: theme.colors.text, fontSize: 11, lineHeight: 16 },
+  smallBody: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
   paranzaTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   paranzaName: {
     color: theme.colors.blueDark,
@@ -482,13 +482,13 @@ const styles = StyleSheet.create({
   paranzaStats: { flexDirection: "row", gap: 6, marginTop: 2 },
   miniStat: {
     flex: 1,
-    minHeight: 54,
+    minHeight: 64,
     borderRadius: 8,
     backgroundColor: theme.colors.blueMist,
     alignItems: "center",
     justifyContent: "center",
   },
-  miniValue: { color: theme.colors.blueDark, fontSize: 14, fontWeight: "900" },
+  miniValue: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
   miniLabel: {
     color: theme.colors.muted,
     fontSize: 7,
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   successCopy: { alignItems: "center", gap: 7, paddingHorizontal: 12 },
   successTitle: {
     color: theme.colors.blueDark,
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: "900",
     textAlign: "center",
   },
