@@ -40,15 +40,46 @@ Per rendere il prototipo immediatamente provabile, l'autenticazione MVP usa due 
 
 Prerequisiti:
 
-- Docker
+- Podman (baseline di sviluppo locale su macOS)
 - Go 1.24+
 - Node.js 22.13+
 - Expo Go sul telefono, se vuoi provarlo su dispositivo fisico
 
-### 1. Database
+### 1. Database con Podman
+
+Su macOS assicurati prima che la VM di Podman sia avviata:
 
 ```bash
-docker compose up -d db
+podman machine start
+```
+
+Avvia PostgreSQL direttamente con Podman:
+
+```bash
+podman volume create mezzo_passo_pg
+
+podman run -d \
+  --name mezzo-passo-postgres \
+  -e POSTGRES_DB=mezzo_passo \
+  -e POSTGRES_USER=mezzo \
+  -e POSTGRES_PASSWORD=mezzo \
+  -p 5432:5432 \
+  -v mezzo_passo_pg:/var/lib/postgresql/data \
+  docker.io/library/postgres:17-alpine
+```
+
+Verifica che sia partito:
+
+```bash
+podman ps
+podman logs mezzo-passo-postgres
+```
+
+Per fermarlo e riavviarlo:
+
+```bash
+podman stop mezzo-passo-postgres
+podman start mezzo-passo-postgres
 ```
 
 ### 2. Backend
