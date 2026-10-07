@@ -304,7 +304,6 @@ export function Metric({
 
 export function Banner({
   name = "ORGOGLIO NOLANO",
-  subtitle,
 }: {
   name?: string;
   subtitle?: string;
@@ -315,11 +314,8 @@ export function Banner({
       resizeMode="cover"
       imageStyle={styles.bannerImage}
       style={styles.banner}
-    >
-      <View style={styles.bannerOverlay} />
-      {subtitle ? <Text style={styles.bannerEyebrow}>{subtitle}</Text> : null}
-      <Text style={styles.bannerText}>{name.toUpperCase()}</Text>
-    </ImageBackground>
+      accessibilityLabel={name}
+    />
   );
 }
 
