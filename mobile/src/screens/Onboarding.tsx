@@ -34,7 +34,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
     return (
       <View style={styles.welcomeRoot}>
         <ImageBackground
-          source={{ uri: WELCOME_IMAGE }}
+          source={WELCOME_IMAGE}
           style={styles.welcomeImage}
           resizeMode="cover"
         >
