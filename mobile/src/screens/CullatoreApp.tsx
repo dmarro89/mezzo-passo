@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
   eventImage: { height: 112, borderRadius: 8, overflow: "hidden" },
   eventImageStyle: { borderRadius: 8 },
   eventShade: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(4,31,78,0.12)",
   },
   eventTitle: {
