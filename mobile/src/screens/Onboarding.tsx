@@ -41,9 +41,6 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.welcomeShade} />
-          <View style={styles.welcomeBrand}>
-            <Brand light />
-          </View>
         </View>
 
         <View style={styles.loginSheet}>
@@ -80,14 +77,14 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
 
         <RoleCard
           selected={role === "capoparanza"}
-          icon="people"
+          icon="ribbon-outline"
           title="Sono un capoparanza"
           body="Organizzo la paranza, creo eventi e comunico con i cullatori."
           onPress={() => setRole("capoparanza")}
         />
         <RoleCard
           selected={role === "cullatore"}
-          icon="people-circle"
+          icon="people"
           title="Sono un cullatore"
           body="Partecipo agli eventi, ricevo le comunicazioni della tua paranza."
           onPress={() => setRole("cullatore")}
@@ -109,7 +106,9 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
               Crea la tua paranza
             </Title>
             <View style={styles.avatarBlock}>
-              <Avatar initials="LI" size={72} />
+              <View style={styles.managerAvatarPlaceholder}>
+                <Ionicons name="person" size={34} color="#B9C7DD" />
+              </View>
               <View style={styles.cameraBadge}>
                 <Ionicons name="camera" size={14} color="#FFFFFF" />
               </View>
@@ -300,8 +299,7 @@ function HeaderLine({ onBack }: { onBack: () => void }) {
   return (
     <View style={styles.headerLine}>
       <HeaderButton icon="chevron-back" onPress={onBack} />
-      <Brand compact />
-      <View style={{ width: 30 }} />
+      <View style={{ flex: 1 }} />
     </View>
   );
 }
@@ -352,14 +350,14 @@ function MiniStat({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create({
   welcomeRoot: { flex: 1, backgroundColor: "#FFFFFF" },
-  welcomeImage: { flex: 1, minHeight: 430, justifyContent: "flex-start" },
+  welcomeImage: { height: 520, justifyContent: "flex-start", overflow: "hidden" },
   welcomeShade: {
     ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(5,31,78,0.20)",
   },
-  welcomeBrand: { alignSelf: "center", marginTop: 58 },
   loginSheet: {
-    marginTop: -16,
+    flex: 1,
+    marginTop: -18,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
@@ -423,6 +421,14 @@ const styles = StyleSheet.create({
   avatarBlock: {
     alignSelf: "center",
     marginVertical: 3,
+  },
+  managerAvatarPlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: "#EEF2F8",
+    alignItems: "center",
+    justifyContent: "center",
   },
   cameraBadge: {
     position: "absolute",
