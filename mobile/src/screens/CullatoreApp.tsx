@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
-  ImageBackground,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -182,14 +182,14 @@ function EventDetail({
     <Screen key="cullatore-event-detail">
       <PageHeader title="Dettaglio evento" onBack={onBack} actionIcon="settings-outline" />
 
-      <ImageBackground
-        source={EVENT_IMAGE}
-        style={styles.eventImage}
-        imageStyle={styles.eventImageStyle}
-        resizeMode="cover"
-      >
+      <View style={styles.eventImage}>
+        <Image
+          source={EVENT_IMAGE}
+          resizeMode="cover"
+          style={StyleSheet.absoluteFill}
+        />
         <View style={styles.eventShade} />
-      </ImageBackground>
+      </View>
 
       <Text style={styles.eventTitle}>{event.title}</Text>
       <InfoLine icon="calendar-outline" text="Sab 20 Lug 2024 · 20:00 - 22:00" />
