@@ -1,5 +1,6 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect, useRef } from "react";
 import {
+  Animated,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -17,28 +18,55 @@ export function Screen({
   children: ReactNode;
   scroll?: boolean;
 }) {
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(8)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [opacity, translateY]);
+
   const body = scroll ? (
     <ScrollView
       contentContainerStyle={styles.scroll}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       {children}
     </ScrollView>
   ) : (
     <View style={styles.scroll}>{children}</View>
   );
-  return <SafeAreaView style={styles.safe}>{body}</SafeAreaView>;
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <Animated.View
+        style={[
+          styles.animated,
+          { opacity, transform: [{ translateY }] },
+        ]}
+      >
+        {body}
+      </Animated.View>
+    </SafeAreaView>
+  );
 }
 
 export function Brand({ compact = false }: { compact?: boolean }) {
   return (
-    <View style={{ gap: 2 }}>
-      <Text style={[styles.brand, compact && { fontSize: 16, letterSpacing: 4 }]}>
-        MEZZO PASSO
-      </Text>
-      {!compact && (
-        <View style={{ width: 36, height: 2, backgroundColor: theme.colors.blue }} />
-      )}
+    <View style={styles.brandWrap}>
+      <Text style={[styles.brand, compact && styles.brandCompact]}>MEZZO PASSO</Text>
+      {!compact ? <View style={styles.brandLine} /> : null}
     </View>
   );
 }
@@ -51,9 +79,30 @@ export function Title({
   subtitle?: string;
 }) {
   return (
-    <View style={{ gap: 6 }}>
+    <View style={styles.titleWrap}>
       <Text style={styles.title}>{children}</Text>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    </View>
+  );
+}
+
+export function SectionTitle({
+  children,
+  action,
+  onAction,
+}: {
+  children: ReactNode;
+  action?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <View style={styles.sectionRow}>
+      <Text style={styles.sectionTitle}>{children}</Text>
+      {action ? (
+        <Pressable onPress={onAction}>
+          <Text style={styles.sectionAction}>{action}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -61,11 +110,17 @@ export function Title({
 export function Card({
   children,
   style,
+  elevated = false,
 }: {
   children: ReactNode;
   style?: object;
+  elevated?: boolean;
 }) {
-  return <View style={[styles.card, style]}>{children}</View>;
+  return (
+    <View style={[styles.card, elevated && styles.cardElevated, style]}>
+      {children}
+    </View>
+  );
 }
 
 export function Button({
@@ -89,15 +144,15 @@ export function Button({
         variant === "secondary" && styles.buttonSecondary,
         variant === "danger" && styles.buttonDanger,
         variant === "ghost" && styles.buttonGhost,
-        pressed && { opacity: 0.78 },
+        pressed && styles.pressed,
         disabled && { opacity: 0.45 },
       ]}
     >
       <Text
         style={[
           styles.buttonText,
-          variant !== "primary" && { color: theme.colors.blueDark },
-          variant === "danger" && { color: theme.colors.danger },
+          variant !== "primary" && styles.buttonTextAlt,
+          variant === "danger" && styles.buttonTextDanger,
         ]}
       >
         {title}
@@ -109,28 +164,52 @@ export function Button({
 export function Pill({
   label,
   active,
+  tone = "default",
   onPress,
 }: {
   label: string;
   active?: boolean;
+  tone?: "default" | "success" | "maybe" | "danger";
   onPress?: () => void;
 }) {
+  const toneStyle =
+    tone === "success"
+      ? styles.pillSuccess
+      : tone === "maybe"
+        ? styles.pillMaybe
+        : tone === "danger"
+          ? styles.pillDanger
+          : undefined;
+
+  const labelStyle =
+    tone === "success"
+      ? styles.pillSuccessText
+      : tone === "maybe"
+        ? styles.pillMaybeText
+        : tone === "danger"
+          ? styles.pillDangerText
+          : undefined;
+
   const content = (
-    <Text style={[styles.pillText, active && { color: theme.colors.surface }]}>
+    <Text
+      style={[
+        styles.pillText,
+        labelStyle,
+        active && tone === "default" && styles.pillTextActive,
+      ]}
+    >
       {label}
     </Text>
   );
-  if (onPress) {
-    return (
-      <Pressable
-        onPress={onPress}
-        style={[styles.pill, active && styles.pillActive]}
-      >
-        {content}
-      </Pressable>
-    );
-  }
-  return <View style={[styles.pill, active && styles.pillActive]}>{content}</View>;
+
+  const body = (
+    <View style={[styles.pill, toneStyle, active && tone === "default" && styles.pillActive]}>
+      {content}
+    </View>
+  );
+
+  if (!onPress) return body;
+  return <Pressable onPress={onPress}>{body}</Pressable>;
 }
 
 export function Field({
@@ -147,10 +226,10 @@ export function Field({
   multiline?: boolean;
 }) {
   return (
-    <View style={{ gap: 6 }}>
+    <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
       <TextInput
-        style={[styles.input, multiline && { minHeight: 96, textAlignVertical: "top" }]}
+        style={[styles.input, multiline && styles.inputMultiline]}
         value={value}
         placeholder={placeholder}
         placeholderTextColor={theme.colors.muted}
@@ -176,10 +255,18 @@ export function Metric({
   );
 }
 
-export function Banner({ name = "ORGOGLIO NOLANO" }: { name?: string }) {
+export function Banner({
+  name = "ORGOGLIO NOLANO",
+  subtitle = "PARANZA",
+}: {
+  name?: string;
+  subtitle?: string;
+}) {
   return (
     <View style={styles.banner}>
-      <Text style={styles.bannerEyebrow}>PARANZA</Text>
+      <View style={styles.bannerOrb} />
+      <View style={styles.bannerStripe} />
+      <Text style={styles.bannerEyebrow}>{subtitle}</Text>
       <Text style={styles.bannerText}>{name.toUpperCase()}</Text>
     </View>
   );
@@ -195,76 +282,122 @@ export function BottomNav({
   onChange: (key: string) => void;
 }) {
   return (
-    <View style={styles.nav}>
-      {items.map((item) => {
-        const selected = item.key === active;
-        return (
-          <Pressable
-            key={item.key}
-            onPress={() => onChange(item.key)}
-            style={styles.navItem}
-          >
-            <Text style={[styles.navIcon, selected && { color: theme.colors.blue }]}>
-              {item.icon}
-            </Text>
-            <Text style={[styles.navLabel, selected && { color: theme.colors.blue }]}>
-              {item.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
+    <SafeAreaView style={styles.navSafe}>
+      <View style={styles.nav}>
+        {items.map((item) => {
+          const selected = item.key === active;
+          return (
+            <Pressable
+              key={item.key}
+              onPress={() => onChange(item.key)}
+              style={({ pressed }) => [
+                styles.navItem,
+                pressed && { opacity: 0.65 },
+              ]}
+            >
+              <View style={[styles.navIconWrap, selected && styles.navIconWrapActive]}>
+                <Text style={[styles.navIcon, selected && styles.navIconActive]}>
+                  {item.icon}
+                </Text>
+              </View>
+              <Text style={[styles.navLabel, selected && styles.navLabelActive]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </SafeAreaView>
   );
 }
 
-export function Empty({ text }: { text: string }) {
+export function Avatar({
+  initials,
+  size = 44,
+}: {
+  initials: string;
+  size?: number;
+}) {
   return (
-    <View style={styles.empty}>
-      <Text style={styles.subtitle}>{text}</Text>
+    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
+      <Text style={styles.avatarText}>{initials}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
+  animated: { flex: 1 },
   scroll: {
     flexGrow: 1,
-    padding: theme.spacing.lg,
-    paddingBottom: 110,
-    gap: theme.spacing.md,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 108,
+    gap: 16,
   },
+  brandWrap: { gap: 10 },
   brand: {
     color: theme.colors.blueDark,
-    fontSize: 32,
+    fontSize: 30,
     fontWeight: "700",
-    letterSpacing: 7,
+    letterSpacing: 6.2,
   },
+  brandCompact: {
+    fontSize: 14,
+    letterSpacing: 3.4,
+  },
+  brandLine: {
+    width: 32,
+    height: 2,
+    borderRadius: 2,
+    backgroundColor: theme.colors.blue,
+  },
+  titleWrap: { gap: 5 },
   title: {
-    color: theme.colors.ink,
+    color: theme.colors.blueDark,
     fontSize: 28,
     lineHeight: 33,
-    fontWeight: "700",
-    letterSpacing: -0.7,
+    fontWeight: "800",
+    letterSpacing: -0.85,
   },
   subtitle: {
     color: theme.colors.text,
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  sectionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  sectionTitle: {
+    color: theme.colors.blueDark,
+    fontSize: 16,
+    fontWeight: "800",
+    letterSpacing: -0.15,
+  },
+  sectionAction: {
+    color: theme.colors.blue,
+    fontSize: 12,
+    fontWeight: "700",
   },
   card: {
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    padding: theme.spacing.md,
-    gap: theme.spacing.sm,
+    padding: 15,
+    gap: 10,
+  },
+  cardElevated: {
+    ...theme.shadow,
   },
   button: {
     minHeight: 48,
     borderRadius: theme.radius.sm,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: theme.spacing.md,
+    paddingHorizontal: 16,
     borderWidth: 1,
   },
   buttonPrimary: {
@@ -273,11 +406,11 @@ const styles = StyleSheet.create({
   },
   buttonSecondary: {
     backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.blue,
+    borderColor: "#B8C9E8",
   },
   buttonDanger: {
     backgroundColor: theme.colors.dangerSoft,
-    borderColor: "#F4C7CC",
+    borderColor: "#F1C9CD",
   },
   buttonGhost: {
     backgroundColor: "transparent",
@@ -285,16 +418,20 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: theme.colors.surface,
-    fontSize: 15,
-    fontWeight: "700",
+    fontSize: 14,
+    fontWeight: "800",
   },
+  buttonTextAlt: { color: theme.colors.blueDark },
+  buttonTextDanger: { color: theme.colors.danger },
+  pressed: { transform: [{ scale: 0.985 }], opacity: 0.86 },
   pill: {
-    minHeight: 34,
+    minHeight: 31,
     borderRadius: theme.radius.pill,
     borderWidth: 1,
     borderColor: theme.colors.line,
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: 12,
+    paddingHorizontal: 11,
+    alignItems: "center",
     justifyContent: "center",
   },
   pillActive: {
@@ -303,12 +440,29 @@ const styles = StyleSheet.create({
   },
   pillText: {
     color: theme.colors.text,
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 11,
+    fontWeight: "800",
   },
+  pillTextActive: { color: theme.colors.surface },
+  pillSuccess: {
+    backgroundColor: theme.colors.successSoft,
+    borderColor: theme.colors.successSoft,
+  },
+  pillSuccessText: { color: theme.colors.success },
+  pillMaybe: {
+    backgroundColor: theme.colors.maybeSoft,
+    borderColor: theme.colors.maybeSoft,
+  },
+  pillMaybeText: { color: theme.colors.maybe },
+  pillDanger: {
+    backgroundColor: theme.colors.dangerSoft,
+    borderColor: theme.colors.dangerSoft,
+  },
+  pillDangerText: { color: theme.colors.danger },
+  fieldWrap: { gap: 6 },
   fieldLabel: {
     color: theme.colors.text,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
   },
   input: {
@@ -320,57 +474,80 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: theme.colors.ink,
-    fontSize: 15,
+    fontSize: 14,
   },
+  inputMultiline: { minHeight: 96, textAlignVertical: "top" },
   metric: {
     flex: 1,
-    minWidth: 130,
+    minWidth: 92,
     backgroundColor: theme.colors.surface,
     borderRadius: theme.radius.md,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    padding: theme.spacing.md,
-    gap: 4,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    gap: 2,
   },
   metricValue: {
     color: theme.colors.blueDark,
-    fontSize: 25,
-    fontWeight: "800",
+    fontSize: 22,
+    fontWeight: "900",
   },
   metricLabel: {
     color: theme.colors.text,
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 10,
+    fontWeight: "700",
   },
   banner: {
-    minHeight: 92,
+    minHeight: 96,
     borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.blueDark,
-    padding: theme.spacing.md,
+    backgroundColor: theme.colors.blueDeep,
+    padding: 16,
     justifyContent: "center",
+    overflow: "hidden",
+  },
+  bannerOrb: {
+    position: "absolute",
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    right: -18,
+    top: -38,
+    backgroundColor: "#164A9F",
+  },
+  bannerStripe: {
+    position: "absolute",
+    width: 220,
+    height: 16,
+    right: -30,
+    bottom: 18,
+    transform: [{ rotate: "-11deg" }],
+    backgroundColor: "#FFFFFF",
+    opacity: 0.14,
   },
   bannerEyebrow: {
-    color: "#BFD4FF",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 3,
+    color: "#BFD3FF",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 2.8,
   },
   bannerText: {
     color: theme.colors.surface,
-    fontSize: 22,
-    fontWeight: "800",
-    letterSpacing: 1,
+    fontSize: 21,
+    fontWeight: "900",
+    letterSpacing: 0.8,
+  },
+  navSafe: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.surface,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.line,
   },
   nav: {
-    position: "absolute",
-    left: 12,
-    right: 12,
-    bottom: 12,
-    minHeight: 66,
-    backgroundColor: theme.colors.surface,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.line,
+    minHeight: 64,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
@@ -378,23 +555,39 @@ const styles = StyleSheet.create({
   },
   navItem: {
     flex: 1,
+    minHeight: 58,
     alignItems: "center",
     justifyContent: "center",
     gap: 3,
   },
-  navIcon: {
-    color: theme.colors.muted,
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  navLabel: {
-    color: theme.colors.muted,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-  empty: {
-    minHeight: 120,
+  navIconWrap: {
+    minWidth: 28,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+  },
+  navIconWrapActive: { backgroundColor: theme.colors.blueSoft },
+  navIcon: {
+    color: theme.colors.muted,
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  navIconActive: { color: theme.colors.blue },
+  navLabel: {
+    color: theme.colors.muted,
+    fontSize: 9,
+    fontWeight: "700",
+  },
+  navLabelActive: { color: theme.colors.blue },
+  avatar: {
+    backgroundColor: theme.colors.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    color: theme.colors.blueDark,
+    fontSize: 12,
+    fontWeight: "900",
   },
 });
