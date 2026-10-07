@@ -85,14 +85,16 @@ export function Brand({ compact = false, light = false }: { compact?: boolean; l
 export function Title({
   children,
   subtitle,
+  large = false,
 }: {
   children: ReactNode;
   subtitle?: string;
+  large?: boolean;
 }) {
   return (
-    <View style={styles.titleWrap}>
-      <Text style={styles.title}>{children}</Text>
-      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+    <View style={[styles.titleWrap, large && styles.titleWrapLarge]}>
+      <Text style={[styles.title, large && styles.titleLarge]}>{children}</Text>
+      {subtitle ? <Text style={[styles.subtitle, large && styles.subtitleLarge]}>{subtitle}</Text> : null}
     </View>
   );
 }
@@ -140,12 +142,14 @@ export function Button({
   variant = "primary",
   disabled,
   icon,
+  large = false,
 }: {
   title: string;
   onPress: () => void;
   variant?: "primary" | "secondary" | "danger" | "ghost";
   disabled?: boolean;
   icon?: React.ComponentProps<typeof Ionicons>["name"];
+  large?: boolean;
 }) {
   const alt = variant !== "primary";
   return (
@@ -154,6 +158,7 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,
+        large && styles.buttonLarge,
         variant === "primary" && styles.buttonPrimary,
         variant === "secondary" && styles.buttonSecondary,
         variant === "danger" && styles.buttonDanger,
@@ -178,6 +183,7 @@ export function Button({
       <Text
         style={[
           styles.buttonText,
+          large && styles.buttonTextLarge,
           alt && styles.buttonTextAlt,
           variant === "danger" && styles.buttonTextDanger,
         ]}
@@ -247,6 +253,7 @@ export function Field({
   placeholder,
   multiline,
   icon,
+  large = false,
 }: {
   label: string;
   value: string;
@@ -254,14 +261,15 @@ export function Field({
   placeholder?: string;
   multiline?: boolean;
   icon?: React.ComponentProps<typeof Ionicons>["name"];
+  large?: boolean;
 }) {
   return (
-    <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={[styles.inputShell, multiline && styles.inputMultiline]}>
+    <View style={[styles.fieldWrap, large && styles.fieldWrapLarge]}>
+      <Text style={[styles.fieldLabel, large && styles.fieldLabelLarge]}>{label}</Text>
+      <View style={[styles.inputShell, large && styles.inputShellLarge, multiline && styles.inputMultiline, multiline && large && styles.inputMultilineLarge]}>
         {icon ? <Ionicons name={icon} size={19} color={theme.colors.blue} /> : null}
         <TextInput
-          style={[styles.input, multiline && { minHeight: 76, textAlignVertical: "top" }]}
+          style={[styles.input, large && styles.inputLarge, multiline && { minHeight: large ? 112 : 76, textAlignVertical: "top" }]}
           value={value}
           placeholder={placeholder}
           placeholderTextColor={theme.colors.muted}
@@ -454,7 +462,8 @@ const styles = StyleSheet.create({
     height: 1.5,
     backgroundColor: theme.colors.blue,
   },
-  titleWrap: { gap: 4 },
+  titleWrap: { gap: 5 },
+  titleWrapLarge: { gap: 8 },
   title: {
     color: theme.colors.blueDark,
     fontSize: 25,
@@ -462,10 +471,19 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.72,
   },
+  titleLarge: {
+    fontSize: 34,
+    lineHeight: 39,
+    letterSpacing: -1.15,
+  },
   subtitle: {
     color: theme.colors.text,
     fontSize: 13,
     lineHeight: 18,
+  },
+  subtitleLarge: {
+    fontSize: 18,
+    lineHeight: 24,
   },
   sectionRow: {
     flexDirection: "row",
@@ -501,6 +519,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
+  buttonLarge: {
+    minHeight: 62,
+    borderRadius: 12,
+    paddingHorizontal: 18,
+  },
   buttonPrimary: {
     backgroundColor: theme.colors.blue,
     borderColor: theme.colors.blue,
@@ -521,6 +544,9 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 13,
     fontWeight: "800",
+  },
+  buttonTextLarge: {
+    fontSize: 17,
   },
   buttonTextAlt: { color: theme.colors.blueDark },
   buttonTextDanger: { color: theme.colors.danger },
@@ -552,10 +578,14 @@ const styles = StyleSheet.create({
   pillDanger: { backgroundColor: theme.colors.dangerSoft, borderColor: "#F4D3D5" },
   pillDangerText: { color: theme.colors.danger },
   fieldWrap: { gap: 5 },
+  fieldWrapLarge: { gap: 8 },
   fieldLabel: {
     color: theme.colors.text,
     fontSize: 10,
     fontWeight: "700",
+  },
+  fieldLabelLarge: {
+    fontSize: 14,
   },
   inputShell: {
     minHeight: 42,
@@ -568,12 +598,22 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 10,
   },
+  inputShellLarge: {
+    minHeight: 60,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+  },
   inputMultiline: { alignItems: "flex-start", paddingTop: 9 },
+  inputMultilineLarge: { paddingTop: 13 },
   input: {
     flex: 1,
     color: theme.colors.ink,
     fontSize: 13,
     paddingVertical: 8,
+  },
+  inputLarge: {
+    fontSize: 17,
+    paddingVertical: 12,
   },
   metric: {
     flex: 1,
