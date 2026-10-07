@@ -1,3 +1,7 @@
+export const WELCOME_IMAGE = "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gigli%20Festival,%20Nola%20(Italia).%20Unesco%20world%20heritage.jpg";
+export const EVENT_IMAGE = "https://commons.wikimedia.org/wiki/Special:Redirect/file/Gigli1.jpg";
+export const BANNER_IMAGE = "https://commons.wikimedia.org/wiki/Special:Redirect/file/Nola%20Duomo%20-%20Festa%20Dei%20Gigli%202010.jpg";
+
 import { EventItem, Me, Member, MessageItem, NotificationItem, Participant, Stats } from "./types";
 
 const now = new Date();
