@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { BANNER_IMAGE } from "./demo";
+import { BANNER_IMAGE, PERSON_IMAGE } from "./demo";
 import { theme } from "./theme";
 
 export function Screen({
@@ -370,14 +370,16 @@ export function Avatar({
   size?: number;
 }) {
   return (
-    <View
+    <ImageBackground
+      source={PERSON_IMAGE}
+      resizeMode="cover"
+      accessibilityLabel={initials}
+      imageStyle={{ borderRadius: size / 2 }}
       style={[
         styles.avatar,
         { width: size, height: size, borderRadius: size / 2 },
       ]}
-    >
-      <Text style={[styles.avatarText, size > 60 && { fontSize: 18 }]}>{initials}</Text>
-    </View>
+    />
   );
 }
 
