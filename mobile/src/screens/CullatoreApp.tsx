@@ -111,7 +111,7 @@ function Home({
   return (
     <Screen key="cullatore-home" withBottomNav>
       <View style={styles.homeHeader}>
-        <HeaderButton icon="chevron-back" />
+        <View style={styles.headerSpacer} />
         <Brand compact />
         <HeaderButton icon="notifications-outline" badge onPress={onNotifications} />
       </View>
@@ -203,7 +203,7 @@ function EventDetail({
       <View style={styles.organizer}>
         <Text style={styles.organizerLabel}>Capoparanza</Text>
         <View style={styles.organizerRow}>
-          <Avatar initials="LI" size={32} />
+          <Avatar initials="LI" size={44} />
           <Text style={styles.personName}>Luca Iorio</Text>
         </View>
       </View>
@@ -235,7 +235,7 @@ function Messages() {
     <Screen key="cullatore-messages" withBottomNav>
       <PageHeader title="Messaggi" />
       <View style={styles.search}>
-        <Ionicons name="search-outline" size={16} color={theme.colors.muted} />
+        <Ionicons name="search-outline" size={18} color={theme.colors.muted} />
         <Text style={styles.searchPlaceholder}>Cerca nei messaggi...</Text>
       </View>
 
@@ -247,7 +247,7 @@ function Messages() {
 
       {demoMessages.map((message, index) => (
         <View key={message.id} style={styles.messageRow}>
-          <Avatar initials={message.senderName === "Luca Iorio" ? "LI" : "ON"} size={35} />
+          <Avatar initials={message.senderName === "Luca Iorio" ? "LI" : "ON"} size={44} />
           <View style={{ flex: 1, gap: 2 }}>
             <View style={styles.headerRow}>
               <Text style={styles.personName}>{message.senderName}</Text>
@@ -326,7 +326,7 @@ function Profile({ onLogout }: { onLogout: () => void }) {
       <PageHeader title="Il mio profilo" actionIcon="settings-outline" />
 
       <View style={styles.profileHeader}>
-        <Avatar initials="DE" size={58} />
+        <Avatar initials="DE" size={72} />
         <View style={{ flex: 1 }}>
           <Text style={styles.profileName}>
             {cullatoreMe.user.firstName} {cullatoreMe.user.lastName}
@@ -337,7 +337,7 @@ function Profile({ onLogout }: { onLogout: () => void }) {
 
       <Card>
         <View style={styles.profileParanza}>
-          <ParanzaLogo size={48} />
+          <ParanzaLogo size={60} />
           <View style={styles.profileParanzaCopy}>
             <Text style={styles.personName}>Orgoglio Nolano</Text>
             <Text style={styles.subtle}>Capoparanza{"\n"}Luca Iorio</Text>
@@ -415,10 +415,10 @@ function PageHeader({
       {onBack ? (
         <HeaderButton icon="chevron-back" onPress={onBack} />
       ) : (
-        <HeaderButton icon="chevron-back" />
+        <View style={styles.headerSpacer} />
       )}
       <Text style={styles.pageTitle}>{title}</Text>
-      {actionIcon ? <HeaderButton icon={actionIcon} /> : <View style={{ width: 30 }} />}
+      {actionIcon ? <HeaderButton icon={actionIcon} /> : <View style={styles.headerSpacer} />}
     </View>
   );
 }
@@ -433,12 +433,14 @@ function RSVPButtons({
   return (
     <View style={styles.rsvp}>
       <Button
+        large
         title={event.rsvp === "confirmed" ? "✓ Partecipo" : "Partecipo"}
         onPress={() => onRSVP(event.id, "confirmed")}
       />
       <View style={styles.rsvpRow}>
         <View style={{ flex: 1 }}>
           <Button
+            large
             title={event.rsvp === "maybe" ? "✓ Forse" : "Forse"}
             variant="secondary"
             onPress={() => onRSVP(event.id, "maybe")}
@@ -446,6 +448,7 @@ function RSVPButtons({
         </View>
         <View style={{ flex: 1 }}>
           <Button
+            large
             title={event.rsvp === "absent" ? "✓ Non partecipo" : "Non partecipo"}
             variant="danger"
             onPress={() => onRSVP(event.id, "absent")}
@@ -489,7 +492,7 @@ function InfoLine({
 }) {
   return (
     <View style={styles.infoLine}>
-      <Ionicons name={icon} size={14} color={theme.colors.blue} />
+      <Ionicons name={icon} size={16} color={theme.colors.blue} />
       <Text style={styles.infoLineText}>{text}</Text>
     </View>
   );
@@ -508,7 +511,7 @@ function InfoRow({
 }) {
   return (
     <View style={[styles.infoRow, last && { borderBottomWidth: 0 }]}>
-      <Ionicons name={icon} size={16} color={theme.colors.blue} />
+      <Ionicons name={icon} size={18} color={theme.colors.blue} />
       <Text style={styles.infoLabel}>{label}</Text>
       <Text style={styles.infoValue}>{value}</Text>
     </View>
@@ -536,37 +539,38 @@ function NotificationRow({
         <Text style={styles.notificationBody}>{body}</Text>
       </View>
       <Text style={styles.notificationTime}>{time}</Text>
-      <Ionicons name="chevron-forward" size={14} color={theme.colors.blue} />
+      <Ionicons name="chevron-forward" size={16} color={theme.colors.blue} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  headerSpacer: { width: 38, height: 38 },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   homeHeader: {
-    minHeight: 44,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
   hello: {
     color: theme.colors.blueDark,
-    fontSize: 26,
-    lineHeight: 29,
+    fontSize: 30,
+    lineHeight: 35,
     fontWeight: "900",
     letterSpacing: -0.8,
   },
   subtle: { color: theme.colors.text, fontSize: 15, lineHeight: 21 },
   metricRow: { flexDirection: "row", gap: 10 },
   filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  eventRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  eventRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   dateBadge: {
-    width: 48,
-    height: 58,
+    width: 58,
+    height: 70,
     borderRadius: 12,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
@@ -575,12 +579,12 @@ const styles = StyleSheet.create({
   dateWeek: { color: theme.colors.blue, fontSize: 11, fontWeight: "900" },
   dateDay: {
     color: theme.colors.blueDark,
-    fontSize: 18,
-    lineHeight: 19,
+    fontSize: 25,
+    lineHeight: 27,
     fontWeight: "900",
   },
   dateMonth: { color: theme.colors.blue, fontSize: 11, fontWeight: "900" },
-  eventRowTitle: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "900" },
+  eventRowTitle: { color: theme.colors.blueDark, fontSize: 18, lineHeight: 22, fontWeight: "900" },
   peopleInline: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   peopleText: { color: theme.colors.blue, fontSize: 12, fontWeight: "700" },
   rsvp: { gap: 9 },
@@ -591,7 +595,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  pageTitle: { color: theme.colors.blueDark, fontSize: 20, fontWeight: "900" },
+  pageTitle: { color: theme.colors.blueDark, fontSize: 21, lineHeight: 25, fontWeight: "900" },
   eventImage: { height: 180, borderRadius: 16, overflow: "hidden" },
   eventImageStyle: { borderRadius: 12 },
   eventShade: {
@@ -600,8 +604,8 @@ const styles = StyleSheet.create({
   },
   eventTitle: {
     color: theme.colors.blueDark,
-    fontSize: 17,
-    lineHeight: 20,
+    fontSize: 24,
+    lineHeight: 29,
     fontWeight: "900",
   },
   infoLine: { flexDirection: "row", alignItems: "center", gap: 6 },
@@ -622,7 +626,7 @@ const styles = StyleSheet.create({
   infoLabel: { color: theme.colors.text, fontSize: 13, width: 96 },
   infoValue: {
     color: theme.colors.blueDark,
-    fontSize: 10,
+    fontSize: 14,
     fontWeight: "700",
     flex: 1,
   },
@@ -659,16 +663,16 @@ const styles = StyleSheet.create({
   weekDay: {
     width: "14.2857%",
     color: theme.colors.muted,
-    fontSize: 8,
+    fontSize: 11,
     textAlign: "center",
     fontWeight: "800",
   },
   daysGrid: { flexDirection: "row", flexWrap: "wrap" },
   dayCell: { width: "14.2857%", alignItems: "center", minHeight: 42 },
   dayCircle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -685,7 +689,7 @@ const styles = StyleSheet.create({
   profileHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
   profileName: { color: theme.colors.blueDark, fontSize: 20, fontWeight: "900" },
   profileParanza: { flexDirection: "row", alignItems: "center", gap: 12 },
-  profileParanzaCopy: { flex: 1, gap: 2 },
+  profileParanzaCopy: { flex: 1, gap: 4 },
   groupTitle: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "900" },
   notificationRow: {
     minHeight: 82,
@@ -696,9 +700,9 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.line,
   },
   notificationIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
     justifyContent: "center",
