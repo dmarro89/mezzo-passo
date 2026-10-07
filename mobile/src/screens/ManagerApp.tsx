@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
   recipientRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   counter: {
     color: theme.colors.muted,
-    fontSize: 9,
+    fontSize: 11,
     textAlign: "right",
     marginTop: -6,
   },
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
   },
   segmentActive: {
     color: theme.colors.blue,
-    fontSize: 19,
+    fontSize: 21,
     fontWeight: "900",
     borderBottomWidth: 2,
     borderBottomColor: theme.colors.blue,
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: "space-between",
   },
-  axisLabel: { color: theme.colors.muted, fontSize: 10.5 },
+  axisLabel: { color: theme.colors.muted, fontSize: 11.5 },
   pageHeader: {
     minHeight: 44,
     flexDirection: "row",
