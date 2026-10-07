@@ -12,7 +12,6 @@ import { WELCOME_IMAGE } from "../demo";
 import {
   Avatar,
   Banner,
-  Brand,
   Button,
   Card,
   Field,
@@ -28,18 +27,14 @@ type Step = "welcome" | "role" | "profile" | "customize" | "success";
 
 export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
   const [step, setStep] = useState<Step>("welcome");
-  const [role, setRole] = useState<Role>("cullatore");
+  const [role, setRole] = useState<Role>("capoparanza");
   const [position, setPosition] = useState("Base sinistra");
 
   if (step === "welcome") {
     return (
       <View style={styles.welcomeRoot}>
         <View style={styles.welcomeImage}>
-          <Image
-            source={WELCOME_IMAGE}
-            resizeMode="cover"
-            style={StyleSheet.absoluteFill}
-          />
+          <Image source={WELCOME_IMAGE} resizeMode="cover" style={styles.welcomePhoto} />
           <View style={styles.welcomeShade} />
         </View>
 
@@ -51,12 +46,14 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           <Button
             title="Continua con Google"
             icon="logo-google"
+            large
             onPress={() => setStep("role")}
           />
           <Button
             title="Continua con Apple"
             icon="logo-apple"
             variant="secondary"
+            large
             onPress={() => setStep("role")}
           />
           <Pressable onPress={() => setStep("role")}>
@@ -71,27 +68,27 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
     return (
       <Screen key="role">
         <HeaderLine onBack={() => setStep("welcome")} />
-        <Title subtitle="Scegli come vuoi usare Mezzo Passo per iniziare.">
+        <Title large subtitle="Scegli come vuoi usare Mezzo Passo per iniziare.">
           Che ruolo hai?
         </Title>
 
         <RoleCard
-          selected={role === "capoparanza"}
-          icon="ribbon-outline"
-          title="Sono un capoparanza"
-          body="Organizzo la paranza, creo eventi e comunico con i cullatori."
-          onPress={() => setRole("capoparanza")}
-        />
-        <RoleCard
           selected={role === "cullatore"}
           icon="people"
           title="Sono un cullatore"
-          body="Partecipo agli eventi, ricevo le comunicazioni della tua paranza."
+          body="Partecipo agli eventi, comunico con la tua paranza e resta aggiornato."
           onPress={() => setRole("cullatore")}
+        />
+        <RoleCard
+          selected={role === "capoparanza"}
+          icon="ribbon"
+          title="Sono un capoparanza"
+          body="Crea e gestisci la tua paranza. Organizza eventi e comunica con i cullatori."
+          onPress={() => setRole("capoparanza")}
         />
 
         <View style={styles.pushBottom} />
-        <Button title="Avanti" onPress={() => setStep("profile")} />
+        <Button large title="Avanti" onPress={() => setStep("profile")} />
       </Screen>
     );
   }
@@ -102,20 +99,23 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
         <HeaderLine onBack={() => setStep("role")} />
         {role === "capoparanza" ? (
           <>
-            <Title subtitle="Inserisci le informazioni principali.">
+            <Title large subtitle="Inserisci le informazioni principali.">
               Crea la tua paranza
             </Title>
+
             <View style={styles.avatarBlock}>
               <View style={styles.managerAvatarPlaceholder}>
-                <Ionicons name="person" size={34} color="#B9C7DD" />
+                <Ionicons name="person" size={44} color="#B9C7DD" />
               </View>
               <View style={styles.cameraBadge}>
-                <Ionicons name="camera" size={14} color="#FFFFFF" />
+                <Ionicons name="camera" size={17} color="#FFFFFF" />
               </View>
             </View>
-            <Field label="Nome paranza" value="Orgoglio Nolano" onChangeText={() => {}} />
-            <Field label="Capoparanza" value="Luca Iorio" onChangeText={() => {}} />
+
+            <Field large label="Nome paranza" value="Orgoglio Nolano" onChangeText={() => {}} />
+            <Field large label="Capoparanza" value="Luca Iorio" onChangeText={() => {}} />
             <Field
+              large
               label="Descrizione (opzionale)"
               value={"Tradizione, Passione, Nola.\nUniti sotto gli stessi colori."}
               onChangeText={() => {}}
@@ -124,24 +124,26 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           </>
         ) : (
           <>
-            <Title subtitle="Inserisci le tue informazioni per unirti alla paranza.">
+            <Title large subtitle="Inserisci le tue informazioni per unirti alla paranza.">
               Completa il tuo profilo
             </Title>
             <View style={styles.avatarBlock}>
-              <Avatar initials="DE" size={72} />
+              <Avatar initials="DE" size={92} />
               <View style={styles.cameraBadge}>
-                <Ionicons name="camera" size={14} color="#FFFFFF" />
+                <Ionicons name="camera" size={17} color="#FFFFFF" />
               </View>
             </View>
-            <Field label="Nome" value="Davide" onChangeText={() => {}} />
-            <Field label="Cognome" value="Esposito" onChangeText={() => {}} />
+            <Field large label="Nome" value="Davide" onChangeText={() => {}} />
+            <Field large label="Cognome" value="Esposito" onChangeText={() => {}} />
             <Field
+              large
               label="Data di nascita"
               value="14 Marzo 1992"
               icon="calendar-outline"
               onChangeText={() => {}}
             />
             <Field
+              large
               label="Posizione nel Giglio"
               value={position}
               icon="people-outline"
@@ -151,7 +153,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
         )}
 
         <View style={styles.pushBottom} />
-        <Button title="Avanti" onPress={() => setStep("customize")} />
+        <Button large title="Avanti" onPress={() => setStep("customize")} />
       </Screen>
     );
   }
@@ -162,9 +164,13 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
         <HeaderLine onBack={() => setStep("profile")} />
         {role === "capoparanza" ? (
           <>
-            <Title subtitle="Seleziona due colori che rappresentano la tua paranza. Saranno utilizzati nell’app e nelle comunicazioni.">
+            <Title
+              large
+              subtitle="Seleziona due colori che rappresentano la tua paranza. Saranno utilizzati nell’app e nelle comunicazioni."
+            >
               Scegli i colori della tua paranza
             </Title>
+
             <View style={styles.palette}>
               {["#FFFFFF", "#0A4DBA", "#B8C0CF", "#8F9DB2", "#617693", "#5B92F4", "#4B859B", "#7B899C", "#B0BBCB", "#D6D9DE"].map((color, i) => (
                 <View
@@ -178,7 +184,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
                   {i === 0 || i === 1 ? (
                     <Ionicons
                       name="checkmark"
-                      size={16}
+                      size={19}
                       color={i === 0 ? theme.colors.blue : "#FFFFFF"}
                     />
                   ) : null}
@@ -186,9 +192,9 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
               ))}
             </View>
 
-            <Text style={styles.labelUpper}>ANTEPRIMA</Text>
+            <Text style={styles.labelUpper}>Anteprima</Text>
             <Banner />
-            <Text style={styles.labelUpper}>COLORI SELEZIONATI</Text>
+            <Text style={styles.labelUpper}>Colori selezionati</Text>
             <View style={styles.selectedColors}>
               <View style={styles.colorLabel}>
                 <View style={[styles.swatch, { backgroundColor: "#FFFFFF" }]} />
@@ -202,10 +208,11 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           </>
         ) : (
           <>
-            <Title subtitle="Inserisci il codice invito o cerca la tua paranza.">
+            <Title large subtitle="Inserisci il codice invito o cerca la tua paranza.">
               Unisciti alla tua paranza
             </Title>
             <Field
+              large
               label="Codice invito (opzionale)"
               value=""
               placeholder="Inserisci codice invito"
@@ -213,7 +220,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
               onChangeText={() => {}}
             />
             <Banner />
-            <Card>
+            <Card style={styles.joinCard}>
               <View style={styles.paranzaTitleRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.paranzaName}>Orgoglio Nolano</Text>
@@ -233,6 +240,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
 
         <View style={styles.pushBottom} />
         <Button
+          large
           title={role === "capoparanza" ? "Avanti" : "Unisciti alla paranza"}
           onPress={() => setStep("success")}
         />
@@ -242,10 +250,11 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
 
   return (
     <Screen key="success">
-      <View style={styles.pushTop} />
+      <View style={styles.successTopSpace} />
       <View style={styles.successIcon}>
-        <Ionicons name="checkmark" size={52} color={theme.colors.blueDark} />
+        <Ionicons name="checkmark" size={62} color={theme.colors.blueDark} />
       </View>
+
       <View style={styles.successCopy}>
         <Text style={styles.successTitle}>
           {role === "capoparanza" ? "Paranza creata!" : "Profilo completato!"}
@@ -259,18 +268,18 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
 
       {role === "capoparanza" ? (
         <Card style={styles.identityRow}>
-          <ParanzaLogo size={48} />
-          <View style={{ flex: 1, gap: 2 }}>
+          <ParanzaLogo size={72} />
+          <View style={{ flex: 1, gap: 4 }}>
             <Text style={styles.identityName}>Orgoglio Nolano</Text>
-            <Text style={styles.smallBody}>Capoparanza{"\n"}Luca Iorio</Text>
+            <Text style={styles.identityMeta}>Capoparanza{"\n"}Luca Iorio</Text>
           </View>
-          <Ionicons name="chevron-forward" size={17} color={theme.colors.blue} />
+          <Ionicons name="chevron-forward" size={24} color={theme.colors.blue} />
         </Card>
       ) : (
         <Card style={styles.identityCard}>
-          <ParanzaLogo size={68} />
+          <ParanzaLogo size={82} />
           <Text style={styles.identityName}>Orgoglio Nolano</Text>
-          <Text style={styles.smallBody}>Capoparanza{"\n"}Luca Iorio</Text>
+          <Text style={styles.identityMeta}>Capoparanza{"\n"}Luca Iorio</Text>
         </Card>
       )}
 
@@ -278,18 +287,20 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
       {role === "capoparanza" ? (
         <>
           <Button
+            large
             title="Invita i cullatori"
             icon="person-add-outline"
             onPress={() => onEnter(role)}
           />
           <Button
+            large
             title="Vai alla tua paranza"
             variant="secondary"
             onPress={() => onEnter(role)}
           />
         </>
       ) : (
-        <Button title="Entra nell’app" onPress={() => onEnter(role)} />
+        <Button large title="Entra nell’app" onPress={() => onEnter(role)} />
       )}
     </Screen>
   );
@@ -319,18 +330,18 @@ function RoleCard({
 }) {
   return (
     <Pressable onPress={onPress}>
-      <Card style={selected ? styles.roleSelected : undefined}>
+      <Card style={[styles.roleCard, selected ? styles.roleSelected : undefined]}>
         <View style={styles.roleRow}>
           <View style={styles.roleIcon}>
-            <Ionicons name={icon} size={22} color={theme.colors.blue} />
+            <Ionicons name={icon} size={29} color={theme.colors.blue} />
           </View>
-          <View style={{ flex: 1, gap: 3 }}>
+          <View style={styles.roleCopy}>
             <Text style={styles.roleTitle}>{title}</Text>
-            <Text style={styles.smallBody}>{body}</Text>
+            <Text style={styles.roleBody}>{body}</Text>
           </View>
           {selected ? (
             <View style={styles.roleCheck}>
-              <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+              <Ionicons name="checkmark" size={15} color="#FFFFFF" />
             </View>
           ) : null}
         </View>
@@ -350,82 +361,117 @@ function MiniStat({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create({
   welcomeRoot: { flex: 1, backgroundColor: "#FFFFFF" },
-  welcomeImage: { flex: 1.15, minHeight: 380, justifyContent: "flex-start", overflow: "hidden" },
+  welcomeImage: {
+    height: "68%",
+    minHeight: 470,
+    overflow: "hidden",
+    backgroundColor: "#D9DEE7",
+  },
+  welcomePhoto: {
+    width: "100%",
+    height: "100%",
+  },
   welcomeShade: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(5,31,78,0.20)",
+    backgroundColor: "rgba(5,31,78,0.04)",
   },
   loginSheet: {
     flex: 1,
-    marginTop: -18,
+    marginTop: -24,
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    paddingHorizontal: 18,
-    paddingTop: 20,
-    paddingBottom: 26,
-    gap: 10,
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    paddingHorizontal: 24,
+    paddingTop: 26,
+    paddingBottom: 28,
+    gap: 14,
   },
   loginTitle: {
     color: theme.colors.blueDark,
-    fontSize: 21,
+    fontSize: 25,
+    lineHeight: 30,
     fontWeight: "900",
     textAlign: "center",
   },
   loginBody: {
     color: theme.colors.text,
-    fontSize: 12,
-    lineHeight: 17,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: "center",
-    marginBottom: 2,
+    marginBottom: 4,
   },
   createAccount: {
     color: theme.colors.blue,
     textAlign: "center",
-    fontSize: 11,
+    fontSize: 15,
     fontWeight: "800",
     textDecorationLine: "underline",
-    marginTop: 2,
+    marginTop: 4,
   },
+
   headerLine: {
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    minHeight: 42,
   },
-  pushBottom: { flex: 1, minHeight: 8 },
-  pushTop: { flex: 0.4 },
-  roleRow: { flexDirection: "row", alignItems: "center", gap: 14 },
-  roleSelected: { borderColor: theme.colors.blue, borderWidth: 1.8 },
+  pushBottom: { flex: 1, minHeight: 14 },
+
+  roleCard: {
+    minHeight: 126,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 17,
+  },
+  roleSelected: {
+    borderColor: theme.colors.blue,
+    borderWidth: 2,
+  },
+  roleRow: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+  },
   roleIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
     justifyContent: "center",
   },
+  roleCopy: {
+    flex: 1,
+    gap: 6,
+  },
   roleTitle: {
     color: theme.colors.blueDark,
-    fontSize: 13,
+    fontSize: 19,
+    lineHeight: 23,
     fontWeight: "900",
   },
+  roleBody: {
+    color: theme.colors.text,
+    fontSize: 15,
+    lineHeight: 21,
+  },
   roleCheck: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: theme.colors.blue,
     alignItems: "center",
     justifyContent: "center",
   },
+
   avatarBlock: {
     alignSelf: "center",
-    marginVertical: 3,
+    marginVertical: 4,
   },
   managerAvatarPlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 92,
+    height: 92,
+    borderRadius: 46,
     backgroundColor: "#EEF2F8",
     alignItems: "center",
     justifyContent: "center",
@@ -434,20 +480,25 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: -2,
     bottom: 2,
-    width: 25,
-    height: 25,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: theme.colors.blue,
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: "#FFFFFF",
     alignItems: "center",
     justifyContent: "center",
   },
-  palette: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+
+  palette: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 15,
+  },
   colorCircle: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 1,
     borderColor: "#D9DFE8",
     alignItems: "center",
@@ -459,73 +510,118 @@ const styles = StyleSheet.create({
   },
   labelUpper: {
     color: theme.colors.text,
-    fontSize: 10,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: 0.8,
   },
-  selectedColors: { flexDirection: "row", gap: 22 },
-  colorLabel: { flexDirection: "row", alignItems: "center", gap: 8 },
+  selectedColors: {
+    flexDirection: "row",
+    gap: 30,
+  },
+  colorLabel: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   swatch: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: 1,
     borderColor: "#C8D1DD",
   },
-  smallBody: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
-  paranzaTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  smallBody: {
+    color: theme.colors.text,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  joinCard: {
+    padding: 18,
+  },
+  paranzaTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   paranzaName: {
     color: theme.colors.blueDark,
-    fontSize: 15,
+    fontSize: 19,
     fontWeight: "900",
   },
-  paranzaStats: { flexDirection: "row", gap: 6, marginTop: 2 },
+  paranzaStats: {
+    flexDirection: "row",
+    gap: 8,
+    marginTop: 4,
+  },
   miniStat: {
     flex: 1,
-    minHeight: 64,
-    borderRadius: 8,
+    minHeight: 72,
+    borderRadius: 10,
     backgroundColor: theme.colors.blueMist,
     alignItems: "center",
     justifyContent: "center",
   },
-  miniValue: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
+  miniValue: {
+    color: theme.colors.blueDark,
+    fontSize: 18,
+    fontWeight: "900",
+  },
   miniLabel: {
     color: theme.colors.muted,
-    fontSize: 7,
+    fontSize: 10,
     textAlign: "center",
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
+  },
+
+  successTopSpace: {
+    height: 26,
   },
   successIcon: {
-    width: 106,
-    height: 106,
-    borderRadius: 53,
+    width: 126,
+    height: 126,
+    borderRadius: 63,
     backgroundColor: theme.colors.blueSoft,
     alignSelf: "center",
     alignItems: "center",
     justifyContent: "center",
   },
-  successCopy: { alignItems: "center", gap: 7, paddingHorizontal: 12 },
+  successCopy: {
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 18,
+  },
   successTitle: {
     color: theme.colors.blueDark,
-    fontSize: 28,
+    fontSize: 31,
+    lineHeight: 36,
     fontWeight: "900",
     textAlign: "center",
   },
   successBody: {
     color: theme.colors.text,
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 16,
+    lineHeight: 23,
     textAlign: "center",
   },
-  identityCard: { alignItems: "center" },
+  identityCard: {
+    alignItems: "center",
+    padding: 18,
+  },
   identityRow: {
+    minHeight: 112,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 14,
+    paddingHorizontal: 16,
   },
   identityName: {
     color: theme.colors.blueDark,
-    fontSize: 15,
+    fontSize: 19,
+    lineHeight: 23,
     fontWeight: "900",
+  },
+  identityMeta: {
+    color: theme.colors.text,
+    fontSize: 15,
+    lineHeight: 21,
   },
 });
