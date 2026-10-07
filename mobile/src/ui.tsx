@@ -311,7 +311,7 @@ export function Banner({
 }) {
   return (
     <ImageBackground
-      source={{ uri: BANNER_IMAGE }}
+      source={BANNER_IMAGE}
       resizeMode="cover"
       imageStyle={styles.bannerImage}
       style={styles.banner}
