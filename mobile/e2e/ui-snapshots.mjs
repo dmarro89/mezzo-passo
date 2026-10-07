@@ -7,6 +7,8 @@ const page = await browser.newPage({
   viewport: { width: 390, height: 844 },
   deviceScaleFactor: 1,
 });
+page.on("console", (msg) => console.log("BROWSER:", msg.type(), msg.text()));
+page.on("pageerror", (err) => console.log("PAGE ERROR:", err.message));
 
 async function shot(name) {
   await page.waitForTimeout(220);
@@ -39,6 +41,8 @@ async function enterCullatore() {
 }
 
 await reset();
+await page.waitForTimeout(1200);
+console.log("INITIAL BODY:", await page.locator("body").innerText());
 await shot("01-welcome");
 await page.getByText("Continua con Google", { exact: true }).click();
 await shot("02-role-selection");
