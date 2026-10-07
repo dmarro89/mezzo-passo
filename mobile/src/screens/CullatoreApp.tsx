@@ -181,7 +181,7 @@ function EventDetail({
       <PageHeader title="Dettaglio evento" onBack={onBack} actionIcon="settings-outline" />
 
       <ImageBackground
-        source={{ uri: EVENT_IMAGE }}
+        source={EVENT_IMAGE}
         style={styles.eventImage}
         imageStyle={styles.eventImageStyle}
         resizeMode="cover"
