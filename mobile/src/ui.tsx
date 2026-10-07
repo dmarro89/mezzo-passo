@@ -1,6 +1,7 @@
 import React, { ReactNode, useEffect, useRef } from "react";
 import {
   Animated,
+  ImageBackground,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -9,6 +10,8 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { BANNER_IMAGE } from "./demo";
 import { theme } from "./theme";
 
 export function Screen({
@@ -19,18 +22,18 @@ export function Screen({
   scroll?: boolean;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(8)).current;
+  const translateY = useRef(new Animated.Value(6)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
-        duration: 220,
+        duration: 180,
         useNativeDriver: true,
       }),
       Animated.timing(translateY, {
         toValue: 0,
-        duration: 220,
+        duration: 180,
         useNativeDriver: true,
       }),
     ]).start();
@@ -51,10 +54,7 @@ export function Screen({
   return (
     <SafeAreaView style={styles.safe}>
       <Animated.View
-        style={[
-          styles.animated,
-          { opacity, transform: [{ translateY }] },
-        ]}
+        style={[styles.animated, { opacity, transform: [{ translateY }] }]}
       >
         {body}
       </Animated.View>
@@ -62,11 +62,21 @@ export function Screen({
   );
 }
 
-export function Brand({ compact = false }: { compact?: boolean }) {
+export function Brand({ compact = false, light = false }: { compact?: boolean; light?: boolean }) {
   return (
     <View style={styles.brandWrap}>
-      <Text style={[styles.brand, compact && styles.brandCompact]}>MEZZO PASSO</Text>
-      {!compact ? <View style={styles.brandLine} /> : null}
+      <Text
+        style={[
+          styles.brand,
+          compact && styles.brandCompact,
+          light && { color: "#FFFFFF" },
+        ]}
+      >
+        MEZZO PASSO
+      </Text>
+      {!compact ? (
+        <View style={[styles.brandLine, light && { backgroundColor: "#FFFFFF" }]} />
+      ) : null}
     </View>
   );
 }
@@ -128,12 +138,15 @@ export function Button({
   onPress,
   variant = "primary",
   disabled,
+  icon,
 }: {
   title: string;
   onPress: () => void;
   variant?: "primary" | "secondary" | "danger" | "ghost";
   disabled?: boolean;
+  icon?: React.ComponentProps<typeof Ionicons>["name"];
 }) {
+  const alt = variant !== "primary";
   return (
     <Pressable
       disabled={disabled}
@@ -148,10 +161,23 @@ export function Button({
         disabled && { opacity: 0.45 },
       ]}
     >
+      {icon ? (
+        <Ionicons
+          name={icon}
+          size={17}
+          color={
+            variant === "primary"
+              ? "#FFFFFF"
+              : variant === "danger"
+                ? theme.colors.danger
+                : theme.colors.blueDark
+          }
+        />
+      ) : null}
       <Text
         style={[
           styles.buttonText,
-          variant !== "primary" && styles.buttonTextAlt,
+          alt && styles.buttonTextAlt,
           variant === "danger" && styles.buttonTextDanger,
         ]}
       >
@@ -190,26 +216,27 @@ export function Pill({
           ? styles.pillDangerText
           : undefined;
 
-  const content = (
-    <Text
+  const body = (
+    <View
       style={[
-        styles.pillText,
-        labelStyle,
-        active && tone === "default" && styles.pillTextActive,
+        styles.pill,
+        toneStyle,
+        active && tone === "default" && styles.pillActive,
       ]}
     >
-      {label}
-    </Text>
-  );
-
-  const body = (
-    <View style={[styles.pill, toneStyle, active && tone === "default" && styles.pillActive]}>
-      {content}
+      <Text
+        style={[
+          styles.pillText,
+          labelStyle,
+          active && tone === "default" && styles.pillTextActive,
+        ]}
+      >
+        {label}
+      </Text>
     </View>
   );
 
-  if (!onPress) return body;
-  return <Pressable onPress={onPress}>{body}</Pressable>;
+  return onPress ? <Pressable onPress={onPress}>{body}</Pressable> : body;
 }
 
 export function Field({
@@ -218,24 +245,29 @@ export function Field({
   onChangeText,
   placeholder,
   multiline,
+  icon,
 }: {
   label: string;
   value: string;
   onChangeText: (value: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  icon?: React.ComponentProps<typeof Ionicons>["name"];
 }) {
   return (
     <View style={styles.fieldWrap}>
       <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        style={[styles.input, multiline && styles.inputMultiline]}
-        value={value}
-        placeholder={placeholder}
-        placeholderTextColor={theme.colors.muted}
-        onChangeText={onChangeText}
-        multiline={multiline}
-      />
+      <View style={[styles.inputShell, multiline && styles.inputMultiline]}>
+        {icon ? <Ionicons name={icon} size={17} color={theme.colors.blue} /> : null}
+        <TextInput
+          style={[styles.input, multiline && { minHeight: 76, textAlignVertical: "top" }]}
+          value={value}
+          placeholder={placeholder}
+          placeholderTextColor={theme.colors.muted}
+          onChangeText={onChangeText}
+          multiline={multiline}
+        />
+      </View>
     </View>
   );
 }
@@ -243,13 +275,28 @@ export function Field({
 export function Metric({
   label,
   value,
+  icon,
+  ring,
 }: {
   label: string;
   value: string | number;
+  icon?: React.ComponentProps<typeof Ionicons>["name"];
+  ring?: boolean;
 }) {
   return (
     <View style={styles.metric}>
-      <Text style={styles.metricValue}>{value}</Text>
+      {ring ? (
+        <View style={styles.metricRing}>
+          <View style={styles.metricRingInner}>
+            <Text style={styles.metricRingValue}>{value}</Text>
+          </View>
+        </View>
+      ) : icon ? (
+        <View style={styles.metricIcon}>
+          <Ionicons name={icon} size={18} color={theme.colors.blue} />
+        </View>
+      ) : null}
+      {!ring ? <Text style={styles.metricValue}>{value}</Text> : null}
       <Text style={styles.metricLabel}>{label}</Text>
     </View>
   );
@@ -257,18 +304,22 @@ export function Metric({
 
 export function Banner({
   name = "ORGOGLIO NOLANO",
-  subtitle = "PARANZA",
+  subtitle,
 }: {
   name?: string;
   subtitle?: string;
 }) {
   return (
-    <View style={styles.banner}>
-      <View style={styles.bannerOrb} />
-      <View style={styles.bannerStripe} />
-      <Text style={styles.bannerEyebrow}>{subtitle}</Text>
+    <ImageBackground
+      source={{ uri: BANNER_IMAGE }}
+      resizeMode="cover"
+      imageStyle={styles.bannerImage}
+      style={styles.banner}
+    >
+      <View style={styles.bannerOverlay} />
+      {subtitle ? <Text style={styles.bannerEyebrow}>{subtitle}</Text> : null}
       <Text style={styles.bannerText}>{name.toUpperCase()}</Text>
-    </View>
+    </ImageBackground>
   );
 }
 
@@ -277,7 +328,12 @@ export function BottomNav({
   active,
   onChange,
 }: {
-  items: { key: string; label: string; icon: string }[];
+  items: {
+    key: string;
+    label: string;
+    icon: React.ComponentProps<typeof Ionicons>["name"];
+    iconActive?: React.ComponentProps<typeof Ionicons>["name"];
+  }[];
   active: string;
   onChange: (key: string) => void;
 }) {
@@ -290,16 +346,13 @@ export function BottomNav({
             <Pressable
               key={item.key}
               onPress={() => onChange(item.key)}
-              style={({ pressed }) => [
-                styles.navItem,
-                pressed && { opacity: 0.65 },
-              ]}
+              style={({ pressed }) => [styles.navItem, pressed && { opacity: 0.62 }]}
             >
-              <View style={[styles.navIconWrap, selected && styles.navIconWrapActive]}>
-                <Text style={[styles.navIcon, selected && styles.navIconActive]}>
-                  {item.icon}
-                </Text>
-              </View>
+              <Ionicons
+                name={selected ? item.iconActive ?? item.icon : item.icon}
+                size={19}
+                color={selected ? theme.colors.blue : theme.colors.muted}
+              />
               <Text style={[styles.navLabel, selected && styles.navLabelActive]}>
                 {item.label}
               </Text>
@@ -319,9 +372,31 @@ export function Avatar({
   size?: number;
 }) {
   return (
-    <View style={[styles.avatar, { width: size, height: size, borderRadius: size / 2 }]}>
-      <Text style={styles.avatarText}>{initials}</Text>
+    <View
+      style={[
+        styles.avatar,
+        { width: size, height: size, borderRadius: size / 2 },
+      ]}
+    >
+      <Text style={[styles.avatarText, size > 60 && { fontSize: 18 }]}>{initials}</Text>
     </View>
+  );
+}
+
+export function HeaderButton({
+  icon,
+  onPress,
+  badge,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  onPress?: () => void;
+  badge?: boolean;
+}) {
+  return (
+    <Pressable onPress={onPress} style={styles.headerButton}>
+      <Ionicons name={icon} size={19} color={theme.colors.blue} />
+      {badge ? <View style={styles.headerBadge} /> : null}
+    </Pressable>
   );
 }
 
@@ -330,40 +405,41 @@ const styles = StyleSheet.create({
   animated: { flex: 1 },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 14,
-    paddingBottom: 108,
-    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 92,
+    gap: 13,
   },
-  brandWrap: { gap: 10 },
+  brandWrap: { gap: 9 },
   brand: {
     color: theme.colors.blueDark,
-    fontSize: 30,
-    fontWeight: "700",
-    letterSpacing: 6.2,
+    fontSize: 28,
+    lineHeight: 31,
+    fontWeight: "600",
+    letterSpacing: 5.6,
   },
   brandCompact: {
-    fontSize: 14,
-    letterSpacing: 3.4,
+    fontSize: 13,
+    letterSpacing: 3.2,
+    lineHeight: 16,
   },
   brandLine: {
-    width: 32,
-    height: 2,
-    borderRadius: 2,
+    width: 30,
+    height: 1.5,
     backgroundColor: theme.colors.blue,
   },
-  titleWrap: { gap: 5 },
+  titleWrap: { gap: 4 },
   title: {
     color: theme.colors.blueDark,
-    fontSize: 28,
-    lineHeight: 33,
+    fontSize: 25,
+    lineHeight: 29,
     fontWeight: "800",
-    letterSpacing: -0.85,
+    letterSpacing: -0.72,
   },
   subtitle: {
     color: theme.colors.text,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 18,
   },
   sectionRow: {
     flexDirection: "row",
@@ -372,33 +448,33 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: theme.colors.blueDark,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "800",
-    letterSpacing: -0.15,
   },
   sectionAction: {
     color: theme.colors.blue,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "700",
+    textDecorationLine: "underline",
   },
   card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
+    borderRadius: 11,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    padding: 15,
-    gap: 10,
+    padding: 12,
+    gap: 8,
   },
-  cardElevated: {
-    ...theme.shadow,
-  },
+  cardElevated: { ...theme.shadow },
   button: {
-    minHeight: 48,
-    borderRadius: theme.radius.sm,
+    minHeight: 45,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     borderWidth: 1,
+    flexDirection: "row",
+    gap: 8,
   },
   buttonPrimary: {
     backgroundColor: theme.colors.blue,
@@ -406,31 +482,31 @@ const styles = StyleSheet.create({
   },
   buttonSecondary: {
     backgroundColor: theme.colors.surface,
-    borderColor: "#B8C9E8",
+    borderColor: theme.colors.blue,
   },
   buttonDanger: {
-    backgroundColor: theme.colors.dangerSoft,
-    borderColor: "#F1C9CD",
+    backgroundColor: theme.colors.surface,
+    borderColor: "#EF6B73",
   },
   buttonGhost: {
     backgroundColor: "transparent",
     borderColor: theme.colors.line,
   },
   buttonText: {
-    color: theme.colors.surface,
-    fontSize: 14,
+    color: "#FFFFFF",
+    fontSize: 13,
     fontWeight: "800",
   },
   buttonTextAlt: { color: theme.colors.blueDark },
   buttonTextDanger: { color: theme.colors.danger },
-  pressed: { transform: [{ scale: 0.985 }], opacity: 0.86 },
+  pressed: { transform: [{ scale: 0.988 }], opacity: 0.86 },
   pill: {
-    minHeight: 31,
-    borderRadius: theme.radius.pill,
+    minHeight: 28,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.colors.line,
     backgroundColor: theme.colors.surface,
-    paddingHorizontal: 11,
+    paddingHorizontal: 10,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -440,148 +516,156 @@ const styles = StyleSheet.create({
   },
   pillText: {
     color: theme.colors.text,
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  pillTextActive: { color: theme.colors.surface },
-  pillSuccess: {
-    backgroundColor: theme.colors.successSoft,
-    borderColor: theme.colors.successSoft,
-  },
-  pillSuccessText: { color: theme.colors.success },
-  pillMaybe: {
-    backgroundColor: theme.colors.maybeSoft,
-    borderColor: theme.colors.maybeSoft,
-  },
-  pillMaybeText: { color: theme.colors.maybe },
-  pillDanger: {
-    backgroundColor: theme.colors.dangerSoft,
-    borderColor: theme.colors.dangerSoft,
-  },
-  pillDangerText: { color: theme.colors.danger },
-  fieldWrap: { gap: 6 },
-  fieldLabel: {
-    color: theme.colors.text,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: "700",
   },
-  input: {
-    backgroundColor: theme.colors.surface,
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    borderRadius: theme.radius.sm,
-    minHeight: 46,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: theme.colors.ink,
-    fontSize: 14,
-  },
-  inputMultiline: { minHeight: 96, textAlignVertical: "top" },
-  metric: {
-    flex: 1,
-    minWidth: 92,
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.colors.line,
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    gap: 2,
-  },
-  metricValue: {
-    color: theme.colors.blueDark,
-    fontSize: 22,
-    fontWeight: "900",
-  },
-  metricLabel: {
+  pillTextActive: { color: "#FFFFFF" },
+  pillSuccess: { backgroundColor: "#EAF8F3", borderColor: "#D1F1E5" },
+  pillSuccessText: { color: theme.colors.success },
+  pillMaybe: { backgroundColor: theme.colors.maybeSoft, borderColor: "#F6E8BD" },
+  pillMaybeText: { color: theme.colors.maybe },
+  pillDanger: { backgroundColor: theme.colors.dangerSoft, borderColor: "#F4D3D5" },
+  pillDangerText: { color: theme.colors.danger },
+  fieldWrap: { gap: 5 },
+  fieldLabel: {
     color: theme.colors.text,
     fontSize: 10,
     fontWeight: "700",
   },
-  banner: {
-    minHeight: 96,
-    borderRadius: theme.radius.md,
-    backgroundColor: theme.colors.blueDeep,
-    padding: 16,
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  bannerOrb: {
-    position: "absolute",
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    right: -18,
-    top: -38,
-    backgroundColor: "#164A9F",
-  },
-  bannerStripe: {
-    position: "absolute",
-    width: 220,
-    height: 16,
-    right: -30,
-    bottom: 18,
-    transform: [{ rotate: "-11deg" }],
+  inputShell: {
+    minHeight: 42,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#DCE3EE",
     backgroundColor: "#FFFFFF",
-    opacity: 0.14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 10,
+  },
+  inputMultiline: { alignItems: "flex-start", paddingTop: 9 },
+  input: {
+    flex: 1,
+    color: theme.colors.ink,
+    fontSize: 13,
+    paddingVertical: 8,
+  },
+  metric: {
+    flex: 1,
+    minWidth: 72,
+    minHeight: 84,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    paddingVertical: 10,
+    paddingHorizontal: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+  },
+  metricIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: theme.colors.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  metricValue: {
+    color: theme.colors.blueDark,
+    fontSize: 19,
+    fontWeight: "900",
+  },
+  metricLabel: {
+    color: theme.colors.text,
+    fontSize: 9,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+  metricRing: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderWidth: 7,
+    borderColor: theme.colors.blue,
+    borderTopColor: "#D7E5FF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  metricRingInner: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  metricRingValue: {
+    color: theme.colors.blueDark,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  banner: {
+    height: 62,
+    borderRadius: 8,
+    overflow: "hidden",
+    justifyContent: "center",
+    paddingHorizontal: 14,
+  },
+  bannerImage: { borderRadius: 8 },
+  bannerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(7,34,87,0.56)",
   },
   bannerEyebrow: {
-    color: "#BFD3FF",
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 2.8,
+    color: "#D9E5FF",
+    fontSize: 8,
+    fontWeight: "800",
+    letterSpacing: 1.8,
   },
   bannerText: {
-    color: theme.colors.surface,
-    fontSize: 21,
+    color: "#FFFFFF",
+    fontSize: 17,
     fontWeight: "900",
-    letterSpacing: 0.8,
+    letterSpacing: 0.2,
+    maxWidth: 220,
   },
   navSafe: {
     position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: "#FFFFFF",
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: theme.colors.line,
   },
   nav: {
-    minHeight: 64,
+    minHeight: 58,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingHorizontal: 6,
+    paddingHorizontal: 3,
   },
   navItem: {
     flex: 1,
-    minHeight: 58,
+    minHeight: 55,
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
+    gap: 2,
   },
-  navIconWrap: {
-    minWidth: 28,
-    height: 24,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  navIconWrapActive: { backgroundColor: theme.colors.blueSoft },
-  navIcon: {
-    color: theme.colors.muted,
-    fontSize: 16,
-    fontWeight: "800",
-  },
-  navIconActive: { color: theme.colors.blue },
   navLabel: {
     color: theme.colors.muted,
-    fontSize: 9,
-    fontWeight: "700",
+    fontSize: 8,
+    fontWeight: "600",
   },
-  navLabelActive: { color: theme.colors.blue },
+  navLabelActive: {
+    color: theme.colors.blue,
+    fontWeight: "800",
+  },
   avatar: {
-    backgroundColor: theme.colors.blueSoft,
+    backgroundColor: "#EAF1FB",
+    borderWidth: 1,
+    borderColor: "#DDE6F3",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -589,5 +673,21 @@ const styles = StyleSheet.create({
     color: theme.colors.blueDark,
     fontSize: 12,
     fontWeight: "900",
+  },
+  headerButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerBadge: {
+    position: "absolute",
+    right: 4,
+    top: 3,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#E13D4F",
   },
 });
