@@ -97,7 +97,8 @@ function Home({
   const next = events[0];
   return (
     <Screen key="manager-home">
-      <View style={styles.headerRow}>
+      <View style={styles.homeHeader}>
+        <HeaderButton icon="chevron-back" />
         <Brand compact />
         <HeaderButton icon="settings-outline" />
       </View>
@@ -591,6 +592,12 @@ function statusLabel(status: Participant["status"]) {
 
 const styles = StyleSheet.create({
   headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  homeHeader: {
+    minHeight: 34,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
