@@ -1,71 +1,98 @@
 import React, { useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Role } from "../types";
-import { Avatar, Banner, Brand, Button, Card, Field, Screen, Title } from "../ui";
+import { WELCOME_IMAGE } from "../demo";
+import {
+  Avatar,
+  Banner,
+  Brand,
+  Button,
+  Card,
+  Field,
+  HeaderButton,
+  Pill,
+  Screen,
+  Title,
+} from "../ui";
 import { theme } from "../theme";
 
+type Step = "welcome" | "role" | "profile" | "customize" | "success";
+
 export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
-  const [step, setStep] = useState<"welcome" | "role" | "profile" | "join">("welcome");
+  const [step, setStep] = useState<Step>("welcome");
   const [role, setRole] = useState<Role>("cullatore");
+  const [position, setPosition] = useState("Base sinistra");
 
   if (step === "welcome") {
     return (
-      <Screen key="welcome">
-        <View style={styles.welcomeHero}>
-          <View style={styles.giglioMark}>
-            <View style={styles.giglioLine} />
-            <View style={[styles.giglioLine, { height: 94, opacity: 0.7 }]} />
-            <View style={[styles.giglioLine, { height: 68, opacity: 0.42 }]} />
+      <View style={styles.welcomeRoot}>
+        <ImageBackground
+          source={{ uri: WELCOME_IMAGE }}
+          style={styles.welcomeImage}
+          resizeMode="cover"
+        >
+          <View style={styles.welcomeShade} />
+          <View style={styles.welcomeBrand}>
+            <Brand light />
           </View>
-          <Brand />
-          <View style={styles.welcomeCopy}>
-            <Text style={styles.eyebrow}>FESTA DEI GIGLI DI NOLA</Text>
-            <Text style={styles.heroTitle}>La paranza, sempre con te.</Text>
-            <Text style={styles.heroText}>
-              Organizza, partecipa e resta aggiornato con un'esperienza pensata
-              per i cullatori.
-            </Text>
-          </View>
-        </View>
+        </ImageBackground>
 
-        <Card elevated>
-          <Text style={styles.cardTitle}>Benvenuto su Mezzo Passo</Text>
-          <Text style={styles.copy}>
-            In questa demo puoi provare entrambe le viste senza account reale.
+        <View style={styles.loginSheet}>
+          <Text style={styles.loginTitle}>Benvenuto su Mezzo Passo</Text>
+          <Text style={styles.loginBody}>
+            L’app dedicata ai cullatori della Festa dei Gigli di Nola.
           </Text>
-          <Button title="Continua" onPress={() => setStep("role")} />
-        </Card>
-      </Screen>
+          <Button
+            title="Continua con Google"
+            icon="logo-google"
+            onPress={() => setStep("role")}
+          />
+          <Button
+            title="Continua con Apple"
+            icon="logo-apple"
+            variant="secondary"
+            onPress={() => setStep("role")}
+          />
+          <Pressable onPress={() => setStep("role")}>
+            <Text style={styles.createAccount}>Crea un account</Text>
+          </Pressable>
+        </View>
+      </View>
     );
   }
 
   if (step === "role") {
     return (
       <Screen key="role">
-        <Brand compact />
+        <HeaderLine onBack={() => setStep("welcome")} />
         <Title subtitle="Scegli come vuoi usare Mezzo Passo per iniziare.">
           Che ruolo hai?
         </Title>
 
         <RoleCard
-          selected={role === "cullatore"}
-          initials="CU"
-          title="Sono un cullatore"
-          body="Partecipo agli eventi, ricevo comunicazioni e resto aggiornato."
-          onPress={() => setRole("cullatore")}
-        />
-        <RoleCard
           selected={role === "capoparanza"}
-          initials="CP"
+          icon="people"
           title="Sono un capoparanza"
-          body="Creo e gestisco la paranza, organizzo eventi e comunico con i cullatori."
+          body="Organizzo la paranza, creo eventi e comunico con i cullatori."
           onPress={() => setRole("capoparanza")}
         />
+        <RoleCard
+          selected={role === "cullatore"}
+          icon="people-circle"
+          title="Sono un cullatore"
+          body="Partecipo agli eventi, ricevo le comunicazioni della tua paranza."
+          onPress={() => setRole("cullatore")}
+        />
 
-        <View style={styles.footerActions}>
-          <Button title="Avanti" onPress={() => setStep("profile")} />
-          <Button title="Indietro" variant="ghost" onPress={() => setStep("welcome")} />
-        </View>
+        <View style={styles.pushBottom} />
+        <Button title="Avanti" onPress={() => setStep("profile")} />
       </Screen>
     );
   }
@@ -73,182 +100,410 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
   if (step === "profile") {
     return (
       <Screen key="profile">
-        <Brand compact />
+        <HeaderLine onBack={() => setStep("role")} />
         {role === "capoparanza" ? (
           <>
             <Title subtitle="Inserisci le informazioni principali.">
               Crea la tua paranza
             </Title>
-            <View style={styles.avatarCenter}>
-              <Avatar initials="LI" size={74} />
+            <View style={styles.avatarBlock}>
+              <Avatar initials="LI" size={72} />
+              <View style={styles.cameraBadge}>
+                <Ionicons name="camera" size={14} color="#FFFFFF" />
+              </View>
             </View>
             <Field label="Nome paranza" value="Orgoglio Nolano" onChangeText={() => {}} />
             <Field label="Capoparanza" value="Luca Iorio" onChangeText={() => {}} />
             <Field
-              label="Descrizione"
-              value="Tradizione, passione, Nola. Uniti sotto gli stessi colori."
+              label="Descrizione (opzionale)"
+              value={"Tradizione, Passione, Nola.\nUniti sotto gli stessi colori."}
               onChangeText={() => {}}
               multiline
             />
-            <Text style={styles.fieldCaption}>COLORI DELLA PARANZA</Text>
-            <View style={styles.colorRow}>
-              <View style={[styles.colorDot, { backgroundColor: "#FFFFFF" }]} />
-              <View style={[styles.colorDot, { backgroundColor: theme.colors.blue }]} />
-              <Text style={styles.copy}>Bianco · Blu</Text>
-            </View>
-            <Banner />
           </>
         ) : (
           <>
-            <Title subtitle="Inserisci le informazioni per unirti alla paranza.">
+            <Title subtitle="Inserisci le tue informazioni per unirti alla paranza.">
               Completa il tuo profilo
             </Title>
-            <View style={styles.avatarCenter}>
-              <Avatar initials="DE" size={74} />
+            <View style={styles.avatarBlock}>
+              <Avatar initials="DE" size={72} />
+              <View style={styles.cameraBadge}>
+                <Ionicons name="camera" size={14} color="#FFFFFF" />
+              </View>
             </View>
             <Field label="Nome" value="Davide" onChangeText={() => {}} />
             <Field label="Cognome" value="Esposito" onChangeText={() => {}} />
-            <Field label="Data di nascita" value="14 Marzo 1992" onChangeText={() => {}} />
-            <Field label="Posizione nel Giglio" value="Ritiro sinistro" onChangeText={() => {}} />
+            <Field
+              label="Data di nascita"
+              value="14 Marzo 1992"
+              icon="calendar-outline"
+              onChangeText={() => {}}
+            />
+            <Field
+              label="Posizione nel Giglio"
+              value={position}
+              icon="people-outline"
+              onChangeText={setPosition}
+            />
           </>
         )}
 
-        <View style={styles.footerActions}>
-          <Button title="Avanti" onPress={() => setStep("join")} />
-          <Button title="Indietro" variant="ghost" onPress={() => setStep("role")} />
-        </View>
+        <View style={styles.pushBottom} />
+        <Button title="Avanti" onPress={() => setStep("customize")} />
+      </Screen>
+    );
+  }
+
+  if (step === "customize") {
+    return (
+      <Screen key="customize">
+        <HeaderLine onBack={() => setStep("profile")} />
+        {role === "capoparanza" ? (
+          <>
+            <Title subtitle="Seleziona due colori che rappresentano la tua paranza. Saranno utilizzati nell’app e nelle comunicazioni.">
+              Scegli i colori della tua paranza
+            </Title>
+            <View style={styles.palette}>
+              {["#FFFFFF", "#0A4DBA", "#B8C0CF", "#8F9DB2", "#617693", "#5B92F4", "#4B859B", "#7B899C", "#B0BBCB", "#D6D9DE"].map((color, i) => (
+                <View
+                  key={color}
+                  style={[
+                    styles.colorCircle,
+                    { backgroundColor: color },
+                    (i === 0 || i === 1) && styles.colorSelected,
+                  ]}
+                >
+                  {i === 0 || i === 1 ? (
+                    <Ionicons
+                      name="checkmark"
+                      size={16}
+                      color={i === 0 ? theme.colors.blue : "#FFFFFF"}
+                    />
+                  ) : null}
+                </View>
+              ))}
+            </View>
+
+            <Text style={styles.labelUpper}>ANTEPRIMA</Text>
+            <Banner />
+            <Text style={styles.labelUpper}>COLORI SELEZIONATI</Text>
+            <View style={styles.selectedColors}>
+              <View style={styles.colorLabel}>
+                <View style={[styles.swatch, { backgroundColor: "#FFFFFF" }]} />
+                <Text style={styles.smallBody}>Bianco</Text>
+              </View>
+              <View style={styles.colorLabel}>
+                <View style={[styles.swatch, { backgroundColor: theme.colors.blue }]} />
+                <Text style={styles.smallBody}>Blu</Text>
+              </View>
+            </View>
+          </>
+        ) : (
+          <>
+            <Title subtitle="Inserisci il codice invito o cerca la tua paranza.">
+              Unisciti alla tua paranza
+            </Title>
+            <Field
+              label="Codice invito (opzionale)"
+              value=""
+              placeholder="Inserisci codice invito"
+              icon="key-outline"
+              onChangeText={() => {}}
+            />
+            <Banner />
+            <Card>
+              <View style={styles.paranzaTitleRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.paranzaName}>Orgoglio Nolano</Text>
+                  <Text style={styles.smallBody}>Capoparanza · Luca Iorio</Text>
+                </View>
+                <Pill label="Paranza" active />
+              </View>
+              <Text style={styles.smallBody}>Tradizione, Passione, Nola.</Text>
+              <View style={styles.paranzaStats}>
+                <MiniStat value="24" label="Cullatori" />
+                <MiniStat value="2010" label="Anno di fondazione" />
+                <MiniStat value="Nola" label="Città" />
+              </View>
+            </Card>
+          </>
+        )}
+
+        <View style={styles.pushBottom} />
+        <Button
+          title={role === "capoparanza" ? "Avanti" : "Unisciti alla paranza"}
+          onPress={() => setStep("success")}
+        />
       </Screen>
     );
   }
 
   return (
-    <Screen key="join">
-      <Brand compact />
+    <Screen key="success">
+      <View style={styles.pushTop} />
+      <View style={styles.successIcon}>
+        <Ionicons name="checkmark" size={52} color={theme.colors.blueDark} />
+      </View>
+      <View style={styles.successCopy}>
+        <Text style={styles.successTitle}>
+          {role === "capoparanza" ? "Paranza creata!" : "Profilo completato!"}
+        </Text>
+        <Text style={styles.successBody}>
+          {role === "capoparanza"
+            ? "Orgoglio Nolano è pronta. Ora puoi invitare i tuoi cullatori e iniziare a organizzare gli eventi."
+            : "Ora sei parte della paranza Orgoglio Nolano. Sei pronto a vivere insieme la Festa dei Gigli di Nola!"}
+        </Text>
+      </View>
+
+      <Card style={styles.identityCard}>
+        <Banner />
+        <Text style={styles.identityName}>Orgoglio Nolano</Text>
+        <Text style={styles.smallBody}>
+          {role === "capoparanza" ? "Capoparanza · Luca Iorio" : "Capoparanza · Luca Iorio"}
+        </Text>
+      </Card>
+
+      <View style={styles.pushBottom} />
       {role === "capoparanza" ? (
         <>
-          <View style={styles.successMark}><Text style={styles.successTick}>✓</Text></View>
-          <Title subtitle="Orgoglio Nolano è pronta. Ora puoi iniziare a organizzare la paranza.">
-            Paranza creata!
-          </Title>
-          <Banner />
-          <Card>
-            <Text style={styles.cardTitle}>Orgoglio Nolano</Text>
-            <Text style={styles.copy}>Capoparanza · Luca Iorio</Text>
-            <Text style={styles.copy}>Colori · Bianco / Blu</Text>
-          </Card>
+          <Button
+            title="Invita i cullatori"
+            icon="person-add-outline"
+            onPress={() => onEnter(role)}
+          />
+          <Button
+            title="Vai alla tua paranza"
+            variant="secondary"
+            onPress={() => onEnter(role)}
+          />
         </>
       ) : (
-        <>
-          <Title subtitle="Inserisci il codice invito per unirti alla tua paranza.">
-            Unisciti alla tua paranza
-          </Title>
-          <Field label="Codice invito" value="MEZZOPASSO" onChangeText={() => {}} />
-          <Banner />
-          <Card>
-            <Text style={styles.cardTitle}>Orgoglio Nolano</Text>
-            <Text style={styles.copy}>Capoparanza · Luca Iorio</Text>
-            <Text style={styles.copy}>Nola · 32 cullatori</Text>
-          </Card>
-        </>
+        <Button title="Entra nell’app" onPress={() => onEnter(role)} />
       )}
-
-      <Button
-        title={role === "capoparanza" ? "Vai alla tua paranza" : "Unisciti alla paranza"}
-        onPress={() => onEnter(role)}
-      />
-      <Button title="Indietro" variant="ghost" onPress={() => setStep("profile")} />
     </Screen>
+  );
+}
+
+function HeaderLine({ onBack }: { onBack: () => void }) {
+  return (
+    <View style={styles.headerLine}>
+      <HeaderButton icon="chevron-back" onPress={onBack} />
+      <Brand compact />
+      <View style={{ width: 30 }} />
+    </View>
   );
 }
 
 function RoleCard({
   selected,
-  initials,
+  icon,
   title,
   body,
   onPress,
 }: {
   selected: boolean;
-  initials: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
   title: string;
   body: string;
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.82 }}>
-      <Card style={selected ? styles.selected : undefined}>
+    <Pressable onPress={onPress}>
+      <Card style={selected ? styles.roleSelected : undefined}>
         <View style={styles.roleRow}>
-          <Avatar initials={initials} />
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={styles.cardTitle}>{title}</Text>
-            <Text style={styles.copy}>{body}</Text>
+          <View style={styles.roleIcon}>
+            <Ionicons name={icon} size={22} color={theme.colors.blue} />
           </View>
-          <View style={[styles.radio, selected && styles.radioSelected]}>
-            {selected ? <View style={styles.radioInner} /> : null}
+          <View style={{ flex: 1, gap: 3 }}>
+            <Text style={styles.roleTitle}>{title}</Text>
+            <Text style={styles.smallBody}>{body}</Text>
           </View>
+          {selected ? (
+            <View style={styles.roleCheck}>
+              <Ionicons name="checkmark" size={12} color="#FFFFFF" />
+            </View>
+          ) : null}
         </View>
       </Card>
     </Pressable>
   );
 }
 
+function MiniStat({ value, label }: { value: string; label: string }) {
+  return (
+    <View style={styles.miniStat}>
+      <Text style={styles.miniValue}>{value}</Text>
+      <Text style={styles.miniLabel}>{label}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  welcomeHero: {
-    minHeight: 410,
-    borderRadius: theme.radius.xl,
-    backgroundColor: theme.colors.blueDeep,
-    padding: 24,
-    justifyContent: "space-between",
-    overflow: "hidden",
+  welcomeRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  welcomeImage: { flex: 1, minHeight: 430, justifyContent: "flex-start" },
+  welcomeShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(5,31,78,0.20)",
   },
-  giglioMark: {
-    position: "absolute",
-    right: 34,
-    top: 34,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 7,
-  },
-  giglioLine: {
-    width: 8,
-    height: 124,
-    borderRadius: 4,
+  welcomeBrand: { alignSelf: "center", marginTop: 58 },
+  loginSheet: {
+    marginTop: -16,
     backgroundColor: "#FFFFFF",
-    opacity: 0.9,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    paddingHorizontal: 18,
+    paddingTop: 20,
+    paddingBottom: 26,
+    gap: 10,
   },
-  welcomeCopy: { gap: 9, paddingTop: 190 },
-  eyebrow: {
-    color: "#BCD0F7",
+  loginTitle: {
+    color: theme.colors.blueDark,
+    fontSize: 18,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  loginBody: {
+    color: theme.colors.text,
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
+    marginBottom: 2,
+  },
+  createAccount: {
+    color: theme.colors.blue,
+    textAlign: "center",
+    fontSize: 11,
+    fontWeight: "800",
+    textDecorationLine: "underline",
+    marginTop: 2,
+  },
+  headerLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    minHeight: 34,
+  },
+  pushBottom: { flex: 1, minHeight: 8 },
+  pushTop: { flex: 0.4 },
+  roleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  roleSelected: { borderColor: theme.colors.blue, borderWidth: 1.8 },
+  roleIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: theme.colors.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  roleTitle: {
+    color: theme.colors.blueDark,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  roleCheck: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: theme.colors.blue,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarBlock: {
+    alignSelf: "center",
+    marginVertical: 3,
+  },
+  cameraBadge: {
+    position: "absolute",
+    right: -2,
+    bottom: 2,
+    width: 25,
+    height: 25,
+    borderRadius: 13,
+    backgroundColor: theme.colors.blue,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  palette: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+  colorCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: "#D9DFE8",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorSelected: {
+    borderWidth: 2,
+    borderColor: theme.colors.blue,
+  },
+  labelUpper: {
+    color: theme.colors.text,
     fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 2.2,
+    fontWeight: "800",
+    letterSpacing: 0.8,
   },
-  heroTitle: {
-    color: "#FFFFFF",
-    fontSize: 38,
-    lineHeight: 41,
-    fontWeight: "900",
-    letterSpacing: -1.4,
-    maxWidth: 310,
+  selectedColors: { flexDirection: "row", gap: 22 },
+  colorLabel: { flexDirection: "row", alignItems: "center", gap: 8 },
+  swatch: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#C8D1DD",
   },
-  heroText: {
-    color: "#D6E1F8",
+  smallBody: { color: theme.colors.text, fontSize: 11, lineHeight: 16 },
+  paranzaTitleRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  paranzaName: {
+    color: theme.colors.blueDark,
     fontSize: 15,
-    lineHeight: 22,
-    maxWidth: 315,
+    fontWeight: "900",
   },
-  cardTitle: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
-  copy: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
-  roleRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  selected: { borderColor: theme.colors.blue, borderWidth: 2, backgroundColor: theme.colors.blueSoft },
-  radio: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: "#B8C4D7", alignItems: "center", justifyContent: "center" },
-  radioSelected: { borderColor: theme.colors.blue },
-  radioInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.colors.blue },
-  footerActions: { gap: 8, marginTop: 4 },
-  avatarCenter: { alignItems: "center", marginVertical: 4 },
-  fieldCaption: { color: theme.colors.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.5 },
-  colorRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  colorDot: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: theme.colors.line },
-  successMark: { alignSelf: "center", width: 82, height: 82, borderRadius: 41, backgroundColor: theme.colors.blueSoft, alignItems: "center", justifyContent: "center", marginVertical: 8 },
-  successTick: { color: theme.colors.blue, fontSize: 38, fontWeight: "900" },
+  paranzaStats: { flexDirection: "row", gap: 6, marginTop: 2 },
+  miniStat: {
+    flex: 1,
+    minHeight: 54,
+    borderRadius: 8,
+    backgroundColor: theme.colors.blueMist,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  miniValue: { color: theme.colors.blueDark, fontSize: 14, fontWeight: "900" },
+  miniLabel: {
+    color: theme.colors.muted,
+    fontSize: 7,
+    textAlign: "center",
+    paddingHorizontal: 3,
+  },
+  successIcon: {
+    width: 106,
+    height: 106,
+    borderRadius: 53,
+    backgroundColor: theme.colors.blueSoft,
+    alignSelf: "center",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successCopy: { alignItems: "center", gap: 7, paddingHorizontal: 12 },
+  successTitle: {
+    color: theme.colors.blueDark,
+    fontSize: 24,
+    fontWeight: "900",
+    textAlign: "center",
+  },
+  successBody: {
+    color: theme.colors.text,
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: "center",
+  },
+  identityCard: { alignItems: "center" },
+  identityName: {
+    color: theme.colors.blueDark,
+    fontSize: 15,
+    fontWeight: "900",
+  },
 });
