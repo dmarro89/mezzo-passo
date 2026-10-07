@@ -34,16 +34,26 @@ Due esperienze demo separate:
 - profilo e posizione nel Giglio
 - notifiche/promemoria
 
-Per rendere il prototipo immediatamente provabile, l'autenticazione MVP usa due identità demo seedate nel database: **Luca Iorio** come capoparanza di **Orgoglio Nolano** e **Davide Esposito** come cullatore. Google/Apple login è volutamente rimandato al passo successivo.
+Per la fase di raffinamento grafico, la **demo mobile è ora completamente locale**: non richiede backend né database per essere provata. Usa dati demo in memoria con **Luca Iorio** come capoparanza di **Orgoglio Nolano** e **Davide Esposito** come cullatore. Il backend Go/PostgreSQL resta nel repository, ma non è necessario per valutare UX, navigazione e resa visiva.
 
-## Avvio locale
+## Provare la demo mobile
 
-Prerequisiti:
+Per la demo grafica corrente servono soltanto:
 
-- Podman (baseline di sviluppo locale su macOS)
-- Go 1.24+
 - Node.js 22.13+
 - Expo Go sul telefono, se vuoi provarlo su dispositivo fisico
+
+```bash
+cd mobile
+npm install
+npm start
+```
+
+La demo non effettua chiamate HTTP: puoi provarla anche senza avviare PostgreSQL o il backend.
+
+## Backend opzionale
+
+Il backend Go/PostgreSQL resta disponibile per lo sviluppo successivo. Se vuoi avviarlo localmente usa Podman.
 
 ### 1. Database con Podman
 
