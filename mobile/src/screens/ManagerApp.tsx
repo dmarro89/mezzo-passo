@@ -151,7 +151,7 @@ function Events({
 
   if (creating) {
     return (
-      <Screen key="manager-create-event">
+      <Screen key="manager-create-event" withBottomNav>
         <PageHeader title="Nuovo evento" onBack={() => setCreating(false)} />
 
         <Text style={styles.blockLabel}>Tipo di evento</Text>
@@ -269,7 +269,7 @@ function Messages({
 
   if (composing) {
     return (
-      <Screen key="manager-compose">
+      <Screen key="manager-compose" withBottomNav>
         <PageHeader title="Nuovo messaggio" onBack={() => setComposing(false)} />
         <Text style={styles.blockLabel}>Destinatari</Text>
         <View style={styles.recipientRow}>
