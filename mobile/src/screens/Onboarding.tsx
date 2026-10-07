@@ -18,6 +18,7 @@ import {
   Field,
   HeaderButton,
   Pill,
+  ParanzaLogo,
   Screen,
   Title,
 } from "../ui";
@@ -256,13 +257,22 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
         </Text>
       </View>
 
-      <Card style={styles.identityCard}>
-        <Banner />
-        <Text style={styles.identityName}>Orgoglio Nolano</Text>
-        <Text style={styles.smallBody}>
-          {role === "capoparanza" ? "Capoparanza · Luca Iorio" : "Capoparanza · Luca Iorio"}
-        </Text>
-      </Card>
+      {role === "capoparanza" ? (
+        <Card style={styles.identityRow}>
+          <ParanzaLogo size={48} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <Text style={styles.identityName}>Orgoglio Nolano</Text>
+            <Text style={styles.smallBody}>Capoparanza{"\n"}Luca Iorio</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={17} color={theme.colors.blue} />
+        </Card>
+      ) : (
+        <Card style={styles.identityCard}>
+          <ParanzaLogo size={68} />
+          <Text style={styles.identityName}>Orgoglio Nolano</Text>
+          <Text style={styles.smallBody}>Capoparanza{"\n"}Luca Iorio</Text>
+        </Card>
+      )}
 
       <View style={styles.pushBottom} />
       {role === "capoparanza" ? (
@@ -501,6 +511,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   identityCard: { alignItems: "center" },
+  identityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
   identityName: {
     color: theme.colors.blueDark,
     fontSize: 15,
