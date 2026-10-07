@@ -149,9 +149,38 @@ function Events({
   const [description, setDescription] = useState("Prova generale in vista della festa.");
   const [required, setRequired] = useState(true);
 
+  function createEvent() {
+    const start = new Date();
+    start.setDate(start.getDate() + 12);
+    start.setHours(20, 0, 0, 0);
+    const end = new Date(start);
+    end.setHours(22, 0, 0, 0);
+    setEvents((current) => [
+      {
+        id: Date.now(),
+        type,
+        title,
+        description,
+        location,
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
+        required,
+        attire: "Maglia della paranza",
+        participantCount: 0,
+        rsvp: "",
+      },
+      ...current,
+    ]);
+    setCreating(false);
+  }
+
   if (creating) {
     return (
-      <Screen key="manager-create-event" withBottomNav>
+      <Screen
+        key="manager-create-event"
+        withBottomNav
+        footer={<Button large title="Crea evento" onPress={createEvent} />}
+      >
         <PageHeader title="Nuovo evento" onBack={() => setCreating(false)} />
 
         <Text style={styles.blockLabel}>Tipo di evento</Text>
@@ -204,35 +233,7 @@ function Events({
           />
         </View>
 
-        <View style={styles.flexSpacer} />
-        <Button
-          large
-          title="Crea evento"
-          onPress={() => {
-            const start = new Date();
-            start.setDate(start.getDate() + 12);
-            start.setHours(20, 0, 0, 0);
-            const end = new Date(start);
-            end.setHours(22, 0, 0, 0);
-            setEvents((current) => [
-              {
-                id: Date.now(),
-                type,
-                title,
-                description,
-                location,
-                startsAt: start.toISOString(),
-                endsAt: end.toISOString(),
-                required,
-                attire: "Maglia della paranza",
-                participantCount: 0,
-                rsvp: "",
-              },
-              ...current,
-            ]);
-            setCreating(false);
-          }}
-        />
+
       </Screen>
     );
   }
@@ -267,9 +268,27 @@ function Messages({
     "Ragazzi,\nci vediamo sabato alle 20:00 in Zona Duomo per la prova della paranza.\n\nÈ importante la presenza di tutti.\nForza Orgoglio Nolano!",
   );
 
+  function sendMessage() {
+    setMessages((current) => [
+      {
+        id: Date.now(),
+        title: subject,
+        body,
+        senderName: "Luca Iorio",
+        createdAt: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+    setComposing(false);
+  }
+
   if (composing) {
     return (
-      <Screen key="manager-compose" withBottomNav>
+      <Screen
+        key="manager-compose"
+        withBottomNav
+        footer={<Button large title="Invia messaggio" onPress={sendMessage} />}
+      >
         <PageHeader title="Nuovo messaggio" onBack={() => setComposing(false)} />
         <Text style={styles.blockLabel}>Destinatari</Text>
         <View style={styles.recipientRow}>
@@ -279,24 +298,7 @@ function Messages({
         <Field label="Oggetto" value={subject} onChangeText={setSubject} />
         <Field label="Messaggio" value={body} onChangeText={setBody} multiline />
         <Text style={styles.counter}>{body.length}/500</Text>
-        <View style={styles.flexSpacer} />
-        <Button
-          large
-          title="Invia messaggio"
-          onPress={() => {
-            setMessages((current) => [
-              {
-                id: Date.now(),
-                title: subject,
-                body,
-                senderName: "Luca Iorio",
-                createdAt: new Date().toISOString(),
-              },
-              ...current,
-            ]);
-            setComposing(false);
-          }}
-        />
+
       </Screen>
     );
   }
