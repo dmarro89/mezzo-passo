@@ -1,6 +1,6 @@
 export const PERSON_IMAGE = require("../assets/mock-person.jpg");
 export const WELCOME_IMAGE = { uri: "https://upload.wikimedia.org/wikipedia/commons/1/19/Nola_Duomo_-_Festa_Dei_Gigli_2010.jpg" };
-export const EVENT_IMAGE = require("../assets/mock-event.jpg");
+export const EVENT_IMAGE = { uri: "https://upload.wikimedia.org/wikipedia/commons/1/19/Nola_Duomo_-_Festa_Dei_Gigli_2010.jpg" };
 export const BANNER_IMAGE = require("../assets/mock-banner.jpg");
 
 import { EventItem, Me, Member, MessageItem, NotificationItem, Participant, Stats } from "./types";
