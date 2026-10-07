@@ -19,10 +19,12 @@ export function Screen({
   children,
   scroll = true,
   withBottomNav = false,
+  footer,
 }: {
   children: ReactNode;
   scroll?: boolean;
   withBottomNav?: boolean;
+  footer?: ReactNode;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(6)).current;
@@ -44,14 +46,28 @@ export function Screen({
 
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={[styles.scroll, withBottomNav && styles.scrollWithBottomNav]}
+      contentContainerStyle={[
+        styles.scroll,
+        withBottomNav && styles.scrollWithBottomNav,
+        footer && styles.scrollWithFooter,
+        footer && withBottomNav && styles.scrollWithNavAndFooter,
+      ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={[styles.scroll, withBottomNav && styles.scrollWithBottomNav]}>{children}</View>
+    <View
+      style={[
+        styles.scroll,
+        withBottomNav && styles.scrollWithBottomNav,
+        footer && styles.scrollWithFooter,
+        footer && withBottomNav && styles.scrollWithNavAndFooter,
+      ]}
+    >
+      {children}
+    </View>
   );
 
   return (
@@ -60,6 +76,16 @@ export function Screen({
         style={[styles.animated, { opacity, transform: [{ translateY }] }]}
       >
         {body}
+        {footer ? (
+          <View
+            style={[
+              styles.screenFooter,
+              withBottomNav && styles.screenFooterWithBottomNav,
+            ]}
+          >
+            {footer}
+          </View>
+        ) : null}
       </Animated.View>
     </SafeAreaView>
   );
@@ -448,6 +474,24 @@ const styles = StyleSheet.create({
   },
   scrollWithBottomNav: {
     paddingBottom: 84,
+  },
+  scrollWithFooter: {
+    paddingBottom: 108,
+  },
+  scrollWithNavAndFooter: {
+    paddingBottom: 182,
+  },
+  screenFooter: {
+    position: "absolute",
+    left: 20,
+    right: 20,
+    bottom: 4,
+    paddingTop: 8,
+    paddingBottom: 4,
+    backgroundColor: theme.colors.background,
+  },
+  screenFooterWithBottomNav: {
+    bottom: 78,
   },
   brandWrap: { gap: 9 },
   brand: {
