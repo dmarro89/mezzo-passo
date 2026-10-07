@@ -186,7 +186,7 @@ function EventDetail({
         <Image
           source={EVENT_IMAGE}
           resizeMode="cover"
-          style={StyleSheet.absoluteFill}
+          style={styles.eventImagePhoto}
         />
         <View style={styles.eventShade} />
       </View>
@@ -596,7 +596,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   pageTitle: { color: theme.colors.blueDark, fontSize: 21, lineHeight: 25, fontWeight: "900" },
-  eventImage: { height: 180, borderRadius: 16, overflow: "hidden" },
+  eventImage: {
+    height: 180,
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#DCE3ED",
+  },
+  eventImagePhoto: {
+    width: "100%",
+    height: "100%",
+  },
   eventImageStyle: { borderRadius: 12 },
   eventShade: {
     ...StyleSheet.absoluteFill,
