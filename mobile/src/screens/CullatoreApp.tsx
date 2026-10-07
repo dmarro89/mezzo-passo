@@ -292,7 +292,7 @@ function Calendar({
         </View>
 
         <View style={styles.daysGrid}>
-          {Array.from({ length: 35 }, (_, i) => i + 1).map((day) => {
+          {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => {
             const active = day === 20;
             const marked = day === 12 || day === 27;
             return (
