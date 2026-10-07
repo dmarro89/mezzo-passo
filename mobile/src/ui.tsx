@@ -324,7 +324,7 @@ export function Banner({
       <Image
         source={BANNER_IMAGE}
         resizeMode="cover"
-        style={StyleSheet.absoluteFill}
+        style={styles.bannerPhoto}
       />
     </View>
   );
@@ -391,7 +391,7 @@ export function Avatar({
       <Image
         source={PERSON_IMAGE}
         resizeMode="cover"
-        style={StyleSheet.absoluteFill}
+        style={styles.fillPhoto}
       />
     </View>
   );
@@ -408,7 +408,7 @@ export function ParanzaLogo({ size = 48 }: { size?: number }) {
       <Image
         source={BANNER_IMAGE}
         resizeMode="cover"
-        style={StyleSheet.absoluteFill}
+        style={styles.fillPhoto}
       />
     </View>
   );
@@ -676,11 +676,18 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   banner: {
-    height: 78,
-    borderRadius: 12,
+    height: 82,
+    borderRadius: 14,
     overflow: "hidden",
-    justifyContent: "center",
-    paddingHorizontal: 14,
+    backgroundColor: theme.colors.blueDeep,
+  },
+  bannerPhoto: {
+    width: "100%",
+    height: "100%",
+  },
+  fillPhoto: {
+    width: "100%",
+    height: "100%",
   },
   bannerImage: { borderRadius: 8 },
   bannerOverlay: {
