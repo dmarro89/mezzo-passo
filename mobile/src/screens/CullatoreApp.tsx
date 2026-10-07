@@ -1,10 +1,18 @@
 import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  ImageBackground,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import {
   cullatoreMe,
   demoEvents,
   demoMessages,
   demoNotifications,
+  EVENT_IMAGE,
 } from "../demo";
 import { EventItem } from "../types";
 import {
@@ -14,6 +22,7 @@ import {
   Brand,
   Button,
   Card,
+  HeaderButton,
   Metric,
   Pill,
   Screen,
@@ -25,17 +34,18 @@ import { theme } from "../theme";
 type Tab = "home" | "events" | "messages" | "calendar" | "profile";
 
 const nav = [
-  { key: "home", label: "Home", icon: "⌂" },
-  { key: "events", label: "Eventi", icon: "□" },
-  { key: "messages", label: "Messaggi", icon: "✉" },
-  { key: "calendar", label: "Calendario", icon: "▦" },
-  { key: "profile", label: "Profilo", icon: "○" },
-];
+  { key: "home", label: "Home", icon: "home-outline", iconActive: "home" },
+  { key: "events", label: "Eventi", icon: "calendar-outline", iconActive: "calendar" },
+  { key: "messages", label: "Messaggi", icon: "chatbox-outline", iconActive: "chatbox" },
+  { key: "calendar", label: "Calendario", icon: "calendar-number-outline", iconActive: "calendar-number" },
+  { key: "profile", label: "Profilo", icon: "person-outline", iconActive: "person" },
+] as const;
 
 export function CullatoreApp({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>("home");
   const [events, setEvents] = useState<EventItem[]>(demoEvents);
   const [selectedEvent, setSelectedEvent] = useState<EventItem>();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   function setRSVP(eventId: number, status: "confirmed" | "maybe" | "absent") {
     setEvents((current) =>
@@ -48,26 +58,39 @@ export function CullatoreApp({ onLogout }: { onLogout: () => void }) {
     );
   }
 
+  if (showNotifications) {
+    return <Notifications onBack={() => setShowNotifications(false)} />;
+  }
+
+  if (selectedEvent) {
+    return (
+      <EventDetail
+        event={selectedEvent}
+        onBack={() => setSelectedEvent(undefined)}
+        onRSVP={(status) => setRSVP(selectedEvent.id, status)}
+      />
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      {selectedEvent ? (
-        <EventDetail
-          event={selectedEvent}
-          onBack={() => setSelectedEvent(undefined)}
-          onRSVP={(status) => setRSVP(selectedEvent.id, status)}
+      {tab === "home" && (
+        <Home
+          events={events}
+          onOpen={setSelectedEvent}
+          onRSVP={setRSVP}
+          onNotifications={() => setShowNotifications(true)}
         />
-      ) : (
-        <>
-          {tab === "home" && (
-            <Home events={events} onOpen={setSelectedEvent} onRSVP={setRSVP} />
-          )}
-          {tab === "events" && <Events events={events} onOpen={setSelectedEvent} />}
-          {tab === "messages" && <Messages />}
-          {tab === "calendar" && <Calendar events={events} onOpen={setSelectedEvent} />}
-          {tab === "profile" && <Profile onLogout={onLogout} />}
-          <BottomNav items={nav} active={tab} onChange={(key) => setTab(key as Tab)} />
-        </>
       )}
+      {tab === "events" && <Events events={events} onOpen={setSelectedEvent} />}
+      {tab === "messages" && <Messages />}
+      {tab === "calendar" && <Calendar events={events} onOpen={setSelectedEvent} />}
+      {tab === "profile" && <Profile onLogout={onLogout} />}
+      <BottomNav
+        items={[...nav]}
+        active={tab}
+        onChange={(key) => setTab(key as Tab)}
+      />
     </View>
   );
 }
@@ -76,58 +99,43 @@ function Home({
   events,
   onOpen,
   onRSVP,
+  onNotifications,
 }: {
   events: EventItem[];
   onOpen: (event: EventItem) => void;
   onRSVP: (id: number, status: "confirmed" | "maybe" | "absent") => void;
+  onNotifications: () => void;
 }) {
   const next = events[0];
-  const confirmed = events.filter((e) => e.rsvp === "confirmed").length;
   return (
     <Screen key="cullatore-home">
-      <View style={styles.topRow}>
+      <View style={styles.headerRow}>
         <Brand compact />
-        <View style={styles.bell}><Text style={styles.bellText}>●</Text></View>
+        <HeaderButton icon="notifications-outline" badge onPress={onNotifications} />
       </View>
 
       <Banner />
-      <View style={styles.profileRow}>
-        <Avatar initials="DE" size={46} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.hello}>Ciao Davide</Text>
-          <Text style={styles.subtle}>Ritiro sinistro · Orgoglio Nolano</Text>
-        </View>
+
+      <View>
+        <Text style={styles.hello}>Ciao Davide</Text>
+        <Text style={styles.subtle}>Base sinistra · Orgoglio Nolano</Text>
       </View>
 
-      <View style={styles.metrics}>
-        <Metric label="Eventi" value={events.length} />
-        <Metric label="Confermati" value={confirmed} />
-        <Metric label="Presenza" value="75%" />
+      <View style={styles.metricRow}>
+        <Metric label="Eventi" value={32} icon="calendar-outline" />
+        <Metric label="Cullatori" value={28} icon="people-outline" />
+        <Metric label="Presenza" value="75%" ring />
       </View>
 
       <SectionTitle action="Vedi tutti">Prossimo evento</SectionTitle>
       {next ? (
-        <Card elevated>
+        <Card>
           <Pressable onPress={() => onOpen(next)}>
             <EventRow event={next} />
           </Pressable>
           <RSVPButtons event={next} onRSVP={onRSVP} />
         </Card>
       ) : null}
-
-      <SectionTitle>Ultimo messaggio</SectionTitle>
-      <Card>
-        <View style={styles.messageHead}>
-          <Avatar initials="LI" size={38} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cardStrong}>Luca Iorio</Text>
-            <Text style={styles.subtle}>Oggi, 10:24</Text>
-          </View>
-        </View>
-        <Text style={styles.body}>
-          Ragazzi, ci vediamo sabato alle 20:00 in Zona Duomo per la prova della paranza.
-        </Text>
-      </Card>
     </Screen>
   );
 }
@@ -141,8 +149,8 @@ function Events({
 }) {
   return (
     <Screen key="cullatore-events">
-      <Title subtitle="Tutti gli appuntamenti della tua paranza.">Eventi</Title>
-      <View style={styles.pills}>
+      <PageHeader title="Eventi" />
+      <View style={styles.filterRow}>
         <Pill label="Tutti" active />
         <Pill label="Prove" />
         <Pill label="Festa" />
@@ -150,7 +158,7 @@ function Events({
       </View>
       {events.map((event) => (
         <Pressable key={event.id} onPress={() => onOpen(event)}>
-          <Card elevated>
+          <Card>
             <EventRow event={event} />
           </Card>
         </Pressable>
@@ -170,27 +178,50 @@ function EventDetail({
 }) {
   return (
     <Screen key="cullatore-event-detail">
-      <View style={styles.topRow}>
-        <Pressable onPress={onBack}><Text style={styles.back}>‹</Text></Pressable>
-        <Text style={styles.headerTitle}>Dettaglio evento</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <PageHeader title="Dettaglio evento" onBack={onBack} actionIcon="settings-outline" />
 
-      <View style={styles.eventHero}>
-        <Text style={styles.heroEyebrow}>ORGOGLIO NOLANO</Text>
-        <Text style={styles.heroTitle}>{event.title}</Text>
-      </View>
+      <ImageBackground
+        source={{ uri: EVENT_IMAGE }}
+        style={styles.eventImage}
+        imageStyle={styles.eventImageStyle}
+        resizeMode="cover"
+      >
+        <View style={styles.eventShade} />
+      </ImageBackground>
 
-      <Title subtitle={formatEvent(event)}>{event.title}</Title>
+      <Text style={styles.eventTitle}>{event.title}</Text>
+      <InfoLine icon="calendar-outline" text="Sab 20 Lug 2024 · 20:00 - 22:00" />
+      <InfoLine icon="location-outline" text="Zona Duomo, Nola" />
+
+      <Text style={styles.body}>
+        Prova generale in vista della festa. È importante la presenza di tutti.
+        Forza Orgoglio Nolano!
+      </Text>
+
+      <View style={styles.organizer}>
+        <Text style={styles.organizerLabel}>Capoparanza</Text>
+        <View style={styles.organizerRow}>
+          <Avatar initials="LI" size={32} />
+          <Text style={styles.personName}>Luca Iorio</Text>
+        </View>
+      </View>
 
       <Card>
-        <Text style={styles.body}>{event.description}</Text>
-        <InfoRow label="Luogo" value={event.location} />
-        <InfoRow label="Partecipanti" value={String(event.participantCount) + " confermati"} />
-        {event.attire ? <InfoRow label="Note" value={event.attire} /> : null}
+        <InfoRow icon="location-outline" label="Luogo" value="Zona Duomo, Nola" />
+        <InfoRow
+          icon="people-outline"
+          label="Partecipanti"
+          value="24 confermati, 4 forse, 2 assenti"
+        />
+        <InfoRow
+          icon="shirt-outline"
+          label="Note"
+          value="Portare scarpe comode e maglia della paranza."
+          last
+        />
       </Card>
 
-      <SectionTitle>La tua partecipazione</SectionTitle>
+      <View style={styles.flexSpacer} />
       <RSVPButtons event={event} onRSVP={(_, status) => onRSVP(status)} />
     </Screen>
   );
@@ -200,14 +231,13 @@ function Messages() {
   const [filter, setFilter] = useState<"all" | "manager" | "paranza">("all");
   return (
     <Screen key="cullatore-messages">
-      <Title subtitle="Ricevi le comunicazioni del capoparanza.">Messaggi</Title>
-
-      <View style={styles.searchMock}>
-        <Text style={styles.searchGlyph}>⌕</Text>
-        <Text style={styles.searchText}>Cerca nei messaggi...</Text>
+      <PageHeader title="Messaggi" />
+      <View style={styles.search}>
+        <Ionicons name="search-outline" size={16} color={theme.colors.muted} />
+        <Text style={styles.searchPlaceholder}>Cerca nei messaggi...</Text>
       </View>
 
-      <View style={styles.pills}>
+      <View style={styles.filterRow}>
         <Pill label="Tutti" active={filter === "all"} onPress={() => setFilter("all")} />
         <Pill label="Capoparanza" active={filter === "manager"} onPress={() => setFilter("manager")} />
         <Pill label="Paranza" active={filter === "paranza"} onPress={() => setFilter("paranza")} />
@@ -215,15 +245,19 @@ function Messages() {
 
       {demoMessages.map((message, index) => (
         <View key={message.id} style={styles.messageRow}>
-          <Avatar initials={message.senderName === "Luca Iorio" ? "LI" : "ON"} />
-          <View style={{ flex: 1, gap: 3 }}>
-            <View style={styles.topRow}>
-              <Text style={styles.cardStrong}>{message.senderName}</Text>
-              <Text style={styles.timeText}>{index === 0 ? "10:24" : index === 1 ? "Ieri" : "3 giorni"}</Text>
+          <Avatar initials={message.senderName === "Luca Iorio" ? "LI" : "ON"} size={35} />
+          <View style={{ flex: 1, gap: 2 }}>
+            <View style={styles.headerRow}>
+              <Text style={styles.personName}>{message.senderName}</Text>
+              <Text style={styles.timeText}>
+                {index === 0 ? "10:24" : index === 1 ? "Ieri" : String(index + 1) + " giorni"}
+              </Text>
             </View>
-            <Text style={styles.messageTitle}>{message.title}</Text>
-            <Text style={styles.preview} numberOfLines={1}>{message.body}</Text>
+            <Text style={styles.messagePreview} numberOfLines={1}>
+              {message.body}
+            </Text>
           </View>
+          {index === 0 ? <View style={styles.unreadDot} /> : null}
         </View>
       ))}
     </Screen>
@@ -237,35 +271,36 @@ function Calendar({
   events: EventItem[];
   onOpen: (event: EventItem) => void;
 }) {
-  const monthLabel = useMemo(() => {
-    const d = new Date(events[0]?.startsAt ?? new Date());
-    return d.toLocaleDateString("it-IT", { month: "long", year: "numeric" });
-  }, [events]);
+  const monthLabel = useMemo(() => "Luglio 2024", []);
 
   return (
     <Screen key="cullatore-calendar">
-      <Title subtitle="Tutti gli eventi della paranza.">Calendario eventi</Title>
-      <Card>
+      <PageHeader title="Calendario eventi" />
+      <Card style={styles.calendarCard}>
         <View style={styles.calendarHeader}>
-          <Text style={styles.calendarArrow}>‹</Text>
+          <Ionicons name="chevron-back" size={17} color={theme.colors.blue} />
           <Text style={styles.calendarMonth}>{monthLabel}</Text>
-          <Text style={styles.calendarArrow}>›</Text>
+          <Ionicons name="chevron-forward" size={17} color={theme.colors.blue} />
         </View>
 
-        <View style={styles.weekdays}>
-          {["L", "M", "M", "G", "V", "S", "D"].map((day, i) => (
-            <Text key={day + "-" + i} style={styles.weekday}>{day}</Text>
+        <View style={styles.weekRow}>
+          {["L", "M", "M", "G", "V", "S", "D"].map((d, i) => (
+            <Text key={d + String(i)} style={styles.weekDay}>{d}</Text>
           ))}
         </View>
 
-        <View style={styles.days}>
+        <View style={styles.daysGrid}>
           {Array.from({ length: 35 }, (_, i) => i + 1).map((day) => {
             const active = day === 20;
+            const marked = day === 12 || day === 27;
             return (
               <View key={day} style={styles.dayCell}>
                 <View style={[styles.dayCircle, active && styles.dayCircleActive]}>
-                  <Text style={[styles.dayText, active && styles.dayTextActive]}>{day}</Text>
+                  <Text style={[styles.dayText, active && styles.dayTextActive]}>
+                    {day}
+                  </Text>
                 </View>
+                {marked ? <View style={styles.dayDot} /> : null}
               </View>
             );
           })}
@@ -286,38 +321,103 @@ function Calendar({
 function Profile({ onLogout }: { onLogout: () => void }) {
   return (
     <Screen key="cullatore-profile">
-      <View style={styles.topRow}>
-        <Title>Il mio profilo</Title>
-        <View style={styles.settings}><Text style={styles.settingsText}>⚙</Text></View>
-      </View>
+      <PageHeader title="Il mio profilo" actionIcon="settings-outline" />
 
-      <View style={styles.profileHero}>
-        <Avatar initials="DE" size={72} />
-        <Text style={styles.profileName}>
-          {cullatoreMe.user.firstName} {cullatoreMe.user.lastName}
-        </Text>
-        <Text style={styles.subtle}>Cullatore · {cullatoreMe.user.position}</Text>
+      <View style={styles.profileHeader}>
+        <Avatar initials="DE" size={58} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.profileName}>
+            {cullatoreMe.user.firstName} {cullatoreMe.user.lastName}
+          </Text>
+          <Text style={styles.subtle}>Cullatore · Base sinistra</Text>
+        </View>
       </View>
-
-      <Banner />
 
       <Card>
-        <InfoRow label="La mia posizione" value="Ritiro sinistro" />
-        <InfoRow label="Anno di partecipazione" value="Dal 2018" />
-        <InfoRow label="Contatti di emergenza" value="2 contatti" />
-        <InfoRow label="Impostazioni" value="›" />
+        <View style={styles.profileParanza}>
+          <Banner />
+          <View style={styles.profileParanzaCopy}>
+            <Text style={styles.personName}>Orgoglio Nolano</Text>
+            <Text style={styles.subtle}>Capoparanza{"\n"}Luca Iorio</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={17} color={theme.colors.blue} />
+        </View>
       </Card>
 
-      <SectionTitle>Notifiche</SectionTitle>
-      {demoNotifications.map((item) => (
-        <Card key={item.id}>
-          <Text style={styles.cardStrong}>{item.title}</Text>
-          <Text style={styles.body}>{item.body}</Text>
-        </Card>
-      ))}
+      <Card>
+        <InfoRow icon="accessibility-outline" label="La mia posizione" value="Base sinistra" />
+        <InfoRow icon="calendar-outline" label="Anno di partecipazione" value="Dal 2018" />
+        <InfoRow icon="call-outline" label="Contatti d’emergenza" value="2 contatti" />
+        <InfoRow icon="settings-outline" label="Impostazioni" value="›" last />
+      </Card>
 
       <Button title="Esci dalla demo" variant="ghost" onPress={onLogout} />
     </Screen>
+  );
+}
+
+function Notifications({ onBack }: { onBack: () => void }) {
+  return (
+    <Screen key="cullatore-notifications">
+      <PageHeader title="Notifiche" onBack={onBack} />
+      <Text style={styles.groupTitle}>Oggi</Text>
+      <NotificationRow
+        icon="notifications"
+        title="Promemoria evento"
+        body="Prova della paranza oggi alle 20:00. Non mancare!"
+        time="10:30"
+      />
+      <NotificationRow
+        icon="shirt"
+        title="Ricorda la maglia"
+        body="Porta con te la maglia della paranza."
+        time="08:15"
+      />
+
+      <Text style={styles.groupTitle}>Ieri</Text>
+      <NotificationRow
+        icon="chatbox-ellipses"
+        title="Nuovo messaggio"
+        body="Luca Iorio: Ragazzi, ci vediamo..."
+        time="19:20"
+      />
+      <NotificationRow
+        icon="people"
+        title="Aggiornamento evento"
+        body="L’orario della prova è stato modificato."
+        time="17:45"
+      />
+
+      <Text style={styles.groupTitle}>Questa settimana</Text>
+      <NotificationRow
+        icon="calendar"
+        title="Riunione paranza"
+        body="Riunione organizzativa presso la Casa della paranza."
+        time="Lun 17:30"
+      />
+    </Screen>
+  );
+}
+
+function PageHeader({
+  title,
+  onBack,
+  actionIcon,
+}: {
+  title: string;
+  onBack?: () => void;
+  actionIcon?: React.ComponentProps<typeof Ionicons>["name"];
+}) {
+  return (
+    <View style={styles.pageHeader}>
+      {onBack ? (
+        <HeaderButton icon="chevron-back" onPress={onBack} />
+      ) : (
+        <HeaderButton icon="chevron-back" />
+      )}
+      <Text style={styles.pageTitle}>{title}</Text>
+      {actionIcon ? <HeaderButton icon={actionIcon} /> : <View style={{ width: 30 }} />}
+    </View>
   );
 }
 
@@ -329,12 +429,12 @@ function RSVPButtons({
   onRSVP: (id: number, status: "confirmed" | "maybe" | "absent") => void;
 }) {
   return (
-    <View style={styles.rsvpWrap}>
+    <View style={styles.rsvp}>
       <Button
         title={event.rsvp === "confirmed" ? "✓ Partecipo" : "Partecipo"}
         onPress={() => onRSVP(event.id, "confirmed")}
       />
-      <View style={styles.twoCol}>
+      <View style={styles.rsvpRow}>
         <View style={{ flex: 1 }}>
           <Button
             title={event.rsvp === "maybe" ? "✓ Forse" : "Forse"}
@@ -355,94 +455,247 @@ function RSVPButtons({
 }
 
 function EventRow({ event, compact = false }: { event: EventItem; compact?: boolean }) {
-  const date = new Date(event.startsAt);
   return (
     <View style={styles.eventRow}>
       <View style={styles.dateBadge}>
-        <Text style={styles.dateDay}>{date.getDate().toString().padStart(2, "0")}</Text>
-        <Text style={styles.dateMonth}>
-          {date.toLocaleDateString("it-IT", { month: "short" }).toUpperCase()}
-        </Text>
+        <Text style={styles.dateWeek}>SAB</Text>
+        <Text style={styles.dateDay}>20</Text>
+        <Text style={styles.dateMonth}>LUG</Text>
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
-        <Text style={styles.cardStrong}>{event.title}</Text>
-        <Text style={styles.subtle}>{formatEvent(event)}</Text>
+      <View style={{ flex: 1, gap: 1 }}>
+        <Text style={styles.eventRowTitle}>{event.title}</Text>
+        <Text style={styles.subtle}>20:00 - 22:00</Text>
         <Text style={styles.subtle}>{event.location}</Text>
         {!compact ? (
-          <Text style={styles.peopleText}>♟ {event.participantCount} partecipanti</Text>
+          <View style={styles.peopleInline}>
+            <Ionicons name="people" size={11} color={theme.colors.blue} />
+            <Text style={styles.peopleText}>{event.participantCount} partecipanti</Text>
+          </View>
         ) : null}
       </View>
-      <Text style={styles.chevron}>›</Text>
+      <Ionicons name="chevron-forward" size={18} color={theme.colors.blue} />
     </View>
   );
 }
 
-function InfoRow({ label, value }: { label: string; value: string }) {
+function InfoLine({
+  icon,
+  text,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  text: string;
+}) {
   return (
-    <View style={styles.infoRow}>
+    <View style={styles.infoLine}>
+      <Ionicons name={icon} size={14} color={theme.colors.blue} />
+      <Text style={styles.infoLineText}>{text}</Text>
+    </View>
+  );
+}
+
+function InfoRow({
+  icon,
+  label,
+  value,
+  last,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  label: string;
+  value: string;
+  last?: boolean;
+}) {
+  return (
+    <View style={[styles.infoRow, last && { borderBottomWidth: 0 }]}>
+      <Ionicons name={icon} size={16} color={theme.colors.blue} />
       <Text style={styles.infoLabel}>{label}</Text>
       <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
 
-function formatEvent(event: EventItem) {
-  const date = new Date(event.startsAt);
-  return date.toLocaleDateString("it-IT", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  }) + " · " + date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+function NotificationRow({
+  icon,
+  title,
+  body,
+  time,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  title: string;
+  body: string;
+  time: string;
+}) {
+  return (
+    <View style={styles.notificationRow}>
+      <View style={styles.notificationIcon}>
+        <Ionicons name={icon} size={18} color={theme.colors.blue} />
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.notificationTitle}>{title}</Text>
+        <Text style={styles.notificationBody}>{body}</Text>
+      </View>
+      <Text style={styles.notificationTime}>{time}</Text>
+      <Ionicons name="chevron-forward" size={14} color={theme.colors.blue} />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  profileRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  hello: { color: theme.colors.blueDark, fontSize: 25, fontWeight: "900", letterSpacing: -0.8 },
-  subtle: { color: theme.colors.text, fontSize: 12, lineHeight: 18 },
-  metrics: { flexDirection: "row", gap: 8 },
-  cardStrong: { color: theme.colors.ink, fontSize: 14, fontWeight: "900" },
-  body: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
-  pills: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  eventRow: { flexDirection: "row", alignItems: "center", gap: 12 },
-  dateBadge: { width: 54, height: 58, borderRadius: 13, backgroundColor: theme.colors.blueSoft, alignItems: "center", justifyContent: "center" },
-  dateDay: { color: theme.colors.blueDark, fontSize: 20, fontWeight: "900" },
-  dateMonth: { color: theme.colors.blue, fontSize: 9, fontWeight: "900" },
-  peopleText: { color: theme.colors.blue, fontSize: 10, fontWeight: "700" },
-  chevron: { color: theme.colors.blue, fontSize: 24 },
-  rsvpWrap: { gap: 8 },
-  twoCol: { flexDirection: "row", gap: 8 },
-  bell: { width: 34, height: 34, borderRadius: 17, backgroundColor: theme.colors.blueSoft, alignItems: "center", justifyContent: "center" },
-  bellText: { color: theme.colors.blue, fontSize: 11 },
-  messageHead: { flexDirection: "row", alignItems: "center", gap: 10 },
-  back: { color: theme.colors.blue, fontSize: 38, lineHeight: 38 },
-  headerTitle: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
-  eventHero: { minHeight: 172, borderRadius: theme.radius.lg, backgroundColor: theme.colors.blueDeep, padding: 20, justifyContent: "flex-end", gap: 5, overflow: "hidden" },
-  heroEyebrow: { color: "#BFD3FF", fontSize: 10, fontWeight: "900", letterSpacing: 2 },
-  heroTitle: { color: "#FFFFFF", fontSize: 28, fontWeight: "900", letterSpacing: -0.8 },
-  infoRow: { minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.line, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  infoLabel: { color: theme.colors.text, fontSize: 12 },
-  infoValue: { color: theme.colors.ink, fontSize: 12, fontWeight: "800", flexShrink: 1, textAlign: "right" },
-  searchMock: { minHeight: 44, borderRadius: 12, backgroundColor: "#F1F4F8", flexDirection: "row", alignItems: "center", paddingHorizontal: 13, gap: 8 },
-  searchGlyph: { color: theme.colors.muted, fontSize: 18 },
-  searchText: { color: theme.colors.muted, fontSize: 13 },
-  messageRow: { minHeight: 72, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.line },
-  timeText: { color: theme.colors.muted, fontSize: 10, fontWeight: "700" },
-  messageTitle: { color: theme.colors.blueDark, fontSize: 12, fontWeight: "800" },
-  preview: { color: theme.colors.text, fontSize: 12 },
-  calendarHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  calendarMonth: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900", textTransform: "capitalize" },
-  calendarArrow: { color: theme.colors.blue, fontSize: 24 },
-  weekdays: { flexDirection: "row", marginTop: 8 },
-  weekday: { flex: 1, textAlign: "center", color: theme.colors.muted, fontSize: 10, fontWeight: "800" },
-  days: { flexDirection: "row", flexWrap: "wrap", marginTop: 6 },
-  dayCell: { width: "14.2857%", alignItems: "center", paddingVertical: 5 },
-  dayCircle: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  hello: {
+    color: theme.colors.blueDark,
+    fontSize: 26,
+    lineHeight: 29,
+    fontWeight: "900",
+    letterSpacing: -0.8,
+  },
+  subtle: { color: theme.colors.text, fontSize: 10.5, lineHeight: 15 },
+  metricRow: { flexDirection: "row", gap: 7 },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
+  eventRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  dateBadge: {
+    width: 48,
+    height: 58,
+    borderRadius: 8,
+    backgroundColor: theme.colors.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dateWeek: { color: theme.colors.blue, fontSize: 8, fontWeight: "900" },
+  dateDay: {
+    color: theme.colors.blueDark,
+    fontSize: 18,
+    lineHeight: 19,
+    fontWeight: "900",
+  },
+  dateMonth: { color: theme.colors.blue, fontSize: 8, fontWeight: "900" },
+  eventRowTitle: { color: theme.colors.blueDark, fontSize: 11.5, fontWeight: "900" },
+  peopleInline: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
+  peopleText: { color: theme.colors.blue, fontSize: 8.5, fontWeight: "700" },
+  rsvp: { gap: 6 },
+  rsvpRow: { flexDirection: "row", gap: 6 },
+  pageHeader: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pageTitle: { color: theme.colors.blueDark, fontSize: 14, fontWeight: "900" },
+  eventImage: { height: 112, borderRadius: 8, overflow: "hidden" },
+  eventImageStyle: { borderRadius: 8 },
+  eventShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(4,31,78,0.12)",
+  },
+  eventTitle: {
+    color: theme.colors.blueDark,
+    fontSize: 17,
+    lineHeight: 20,
+    fontWeight: "900",
+  },
+  infoLine: { flexDirection: "row", alignItems: "center", gap: 6 },
+  infoLineText: { color: theme.colors.blue, fontSize: 10.5 },
+  body: { color: theme.colors.text, fontSize: 11, lineHeight: 16 },
+  organizer: { gap: 5 },
+  organizerLabel: { color: theme.colors.text, fontSize: 9.5, fontWeight: "700" },
+  organizerRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  personName: { color: theme.colors.blueDark, fontSize: 10.5, fontWeight: "900" },
+  infoRow: {
+    minHeight: 44,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.line,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  infoLabel: { color: theme.colors.text, fontSize: 10, width: 70 },
+  infoValue: {
+    color: theme.colors.blueDark,
+    fontSize: 10,
+    fontWeight: "700",
+    flex: 1,
+  },
+  flexSpacer: { flex: 1, minHeight: 3 },
+  search: {
+    height: 38,
+    borderRadius: 9,
+    backgroundColor: "#F1F5FA",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    gap: 7,
+  },
+  searchPlaceholder: { color: theme.colors.muted, fontSize: 10.5 },
+  messageRow: {
+    minHeight: 57,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.line,
+  },
+  timeText: { color: theme.colors.muted, fontSize: 8.5 },
+  messagePreview: { color: theme.colors.text, fontSize: 9.5 },
+  unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.blue },
+  calendarCard: { gap: 6 },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  calendarMonth: { color: theme.colors.blueDark, fontSize: 13, fontWeight: "900" },
+  weekRow: { flexDirection: "row" },
+  weekDay: {
+    width: "14.2857%",
+    color: theme.colors.muted,
+    fontSize: 8,
+    textAlign: "center",
+    fontWeight: "800",
+  },
+  daysGrid: { flexDirection: "row", flexWrap: "wrap" },
+  dayCell: { width: "14.2857%", alignItems: "center", minHeight: 30 },
+  dayCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   dayCircleActive: { backgroundColor: theme.colors.blue },
-  dayText: { color: theme.colors.text, fontSize: 11, fontWeight: "700" },
-  dayTextActive: { color: "#FFFFFF" },
-  settings: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: theme.colors.line, alignItems: "center", justifyContent: "center" },
-  settingsText: { color: theme.colors.blueDark, fontSize: 14 },
-  profileHero: { alignItems: "center", gap: 6, paddingVertical: 10 },
-  profileName: { color: theme.colors.blueDark, fontSize: 23, fontWeight: "900" },
+  dayText: { color: theme.colors.text, fontSize: 8.5, fontWeight: "700" },
+  dayTextActive: { color: "#FFFFFF", fontWeight: "900" },
+  dayDot: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: theme.colors.blue,
+    marginTop: 1,
+  },
+  profileHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  profileName: { color: theme.colors.blueDark, fontSize: 13, fontWeight: "900" },
+  profileParanza: { flexDirection: "row", alignItems: "center", gap: 8 },
+  profileParanzaCopy: { flex: 1, gap: 2 },
+  groupTitle: { color: theme.colors.blueDark, fontSize: 12, fontWeight: "900" },
+  notificationRow: {
+    minHeight: 66,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.line,
+  },
+  notificationIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: theme.colors.blueSoft,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  notificationTitle: { color: theme.colors.blueDark, fontSize: 10.5, fontWeight: "900" },
+  notificationBody: { color: theme.colors.text, fontSize: 9.5, lineHeight: 13 },
+  notificationTime: { color: theme.colors.blue, fontSize: 8.5 },
 });
