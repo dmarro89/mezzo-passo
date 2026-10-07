@@ -345,6 +345,8 @@ export function BottomNav({
           return (
             <Pressable
               key={item.key}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
               onPress={() => onChange(item.key)}
               style={({ pressed }) => [styles.navItem, pressed && { opacity: 0.62 }]}
             >
@@ -393,7 +395,12 @@ export function HeaderButton({
   badge?: boolean;
 }) {
   return (
-    <Pressable onPress={onPress} style={styles.headerButton}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={icon}
+      onPress={onPress}
+      style={styles.headerButton}
+    >
       <Ionicons name={icon} size={19} color={theme.colors.blue} />
       {badge ? <View style={styles.headerBadge} /> : null}
     </Pressable>
