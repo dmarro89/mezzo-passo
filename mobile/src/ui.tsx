@@ -1,6 +1,7 @@
 import React, { ReactNode, useEffect, useRef } from "react";
 import {
   Animated,
+  Image,
   ImageBackground,
   Pressable,
   SafeAreaView,
@@ -309,13 +310,13 @@ export function Banner({
   subtitle?: string;
 }) {
   return (
-    <ImageBackground
-      source={BANNER_IMAGE}
-      resizeMode="cover"
-      imageStyle={styles.bannerImage}
-      style={styles.banner}
-      accessibilityLabel={name}
-    />
+    <View style={styles.banner} accessibilityLabel={name}>
+      <Image
+        source={BANNER_IMAGE}
+        resizeMode="cover"
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
   );
 }
 
@@ -370,30 +371,36 @@ export function Avatar({
   size?: number;
 }) {
   return (
-    <ImageBackground
-      source={PERSON_IMAGE}
-      resizeMode="cover"
+    <View
       accessibilityLabel={initials}
-      imageStyle={{ borderRadius: size / 2 }}
       style={[
         styles.avatar,
         { width: size, height: size, borderRadius: size / 2 },
       ]}
-    />
+    >
+      <Image
+        source={PERSON_IMAGE}
+        resizeMode="cover"
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
   );
 }
 
 export function ParanzaLogo({ size = 48 }: { size?: number }) {
   return (
-    <ImageBackground
-      source={BANNER_IMAGE}
-      resizeMode="cover"
-      imageStyle={{ borderRadius: size / 2 }}
+    <View
       style={[
         styles.paranzaLogo,
         { width: size, height: size, borderRadius: size / 2 },
       ]}
-    />
+    >
+      <Image
+        source={BANNER_IMAGE}
+        resizeMode="cover"
+        style={StyleSheet.absoluteFill}
+      />
+    </View>
   );
 }
 
