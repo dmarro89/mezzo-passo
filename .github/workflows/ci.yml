@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: backend/go.mod
-          cache-dependency-path: backend/go.sum
+          cache: false
       - name: Download modules
         run: go mod download
       - name: Test
@@ -34,8 +34,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20.19.4"
-          cache: npm
-          cache-dependency-path: mobile/package-lock.json
       - name: Install dependencies
         run: npm install
       - name: Typecheck
