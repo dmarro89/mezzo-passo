@@ -18,9 +18,11 @@ import { theme } from "./theme";
 export function Screen({
   children,
   scroll = true,
+  withBottomNav = false,
 }: {
   children: ReactNode;
   scroll?: boolean;
+  withBottomNav?: boolean;
 }) {
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(6)).current;
@@ -42,14 +44,14 @@ export function Screen({
 
   const body = scroll ? (
     <ScrollView
-      contentContainerStyle={styles.scroll}
+      contentContainerStyle={[styles.scroll, withBottomNav && styles.scrollWithBottomNav]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
       {children}
     </ScrollView>
   ) : (
-    <View style={styles.scroll}>{children}</View>
+    <View style={[styles.scroll, withBottomNav && styles.scrollWithBottomNav]}>{children}</View>
   );
 
   return (
@@ -439,10 +441,13 @@ const styles = StyleSheet.create({
   animated: { flex: 1 },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 20,
+    gap: 18,
+  },
+  scrollWithBottomNav: {
     paddingBottom: 92,
-    gap: 13,
   },
   brandWrap: { gap: 9 },
   brand: {
@@ -453,9 +458,9 @@ const styles = StyleSheet.create({
     letterSpacing: 5.6,
   },
   brandCompact: {
-    fontSize: 13,
-    letterSpacing: 3.2,
-    lineHeight: 16,
+    fontSize: 15,
+    letterSpacing: 3.4,
+    lineHeight: 19,
   },
   brandLine: {
     width: 30,
@@ -466,8 +471,8 @@ const styles = StyleSheet.create({
   titleWrapLarge: { gap: 8 },
   title: {
     color: theme.colors.blueDark,
-    fontSize: 25,
-    lineHeight: 29,
+    fontSize: 28,
+    lineHeight: 33,
     fontWeight: "800",
     letterSpacing: -0.72,
   },
@@ -478,8 +483,8 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: theme.colors.text,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 15,
+    lineHeight: 21,
   },
   subtitleLarge: {
     fontSize: 18,
@@ -492,26 +497,26 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: theme.colors.blueDark,
-    fontSize: 14,
+    fontSize: 17,
     fontWeight: "800",
   },
   sectionAction: {
     color: theme.colors.blue,
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: "700",
   },
   card: {
     backgroundColor: theme.colors.surface,
-    borderRadius: 11,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: theme.colors.line,
-    padding: 12,
-    gap: 8,
+    padding: 16,
+    gap: 12,
   },
   cardElevated: { ...theme.shadow },
   button: {
-    minHeight: 45,
-    borderRadius: 9,
+    minHeight: 50,
+    borderRadius: 11,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 14,
@@ -542,7 +547,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#FFFFFF",
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: "800",
   },
   buttonTextLarge: {
@@ -552,8 +557,8 @@ const styles = StyleSheet.create({
   buttonTextDanger: { color: theme.colors.danger },
   pressed: { transform: [{ scale: 0.988 }], opacity: 0.86 },
   pill: {
-    minHeight: 28,
-    borderRadius: 8,
+    minHeight: 32,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: theme.colors.line,
     backgroundColor: theme.colors.surface,
@@ -567,7 +572,7 @@ const styles = StyleSheet.create({
   },
   pillText: {
     color: theme.colors.text,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "700",
   },
   pillTextActive: { color: "#FFFFFF" },
@@ -581,15 +586,15 @@ const styles = StyleSheet.create({
   fieldWrapLarge: { gap: 8 },
   fieldLabel: {
     color: theme.colors.text,
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: "700",
   },
   fieldLabelLarge: {
     fontSize: 14,
   },
   inputShell: {
-    minHeight: 42,
-    borderRadius: 8,
+    minHeight: 48,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: "#DCE3EE",
     backgroundColor: "#FFFFFF",
@@ -608,8 +613,8 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: theme.colors.ink,
-    fontSize: 13,
-    paddingVertical: 8,
+    fontSize: 15,
+    paddingVertical: 10,
   },
   inputLarge: {
     fontSize: 17,
@@ -618,7 +623,7 @@ const styles = StyleSheet.create({
   metric: {
     flex: 1,
     minWidth: 72,
-    minHeight: 100,
+    minHeight: 108,
     backgroundColor: "#FFFFFF",
     borderRadius: 10,
     borderWidth: 1,
@@ -630,21 +635,21 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   metricIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
     justifyContent: "center",
   },
   metricValue: {
     color: theme.colors.blueDark,
-    fontSize: 19,
+    fontSize: 23,
     fontWeight: "900",
   },
   metricLabel: {
     color: theme.colors.text,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "700",
     textAlign: "center",
   },
@@ -667,12 +672,12 @@ const styles = StyleSheet.create({
   },
   metricRingValue: {
     color: theme.colors.blueDark,
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: "900",
   },
   banner: {
-    height: 62,
-    borderRadius: 8,
+    height: 78,
+    borderRadius: 12,
     overflow: "hidden",
     justifyContent: "center",
     paddingHorizontal: 14,
@@ -705,7 +710,7 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.line,
   },
   nav: {
-    minHeight: 66,
+    minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
@@ -713,14 +718,14 @@ const styles = StyleSheet.create({
   },
   navItem: {
     flex: 1,
-    minHeight: 62,
+    minHeight: 68,
     alignItems: "center",
     justifyContent: "center",
     gap: 2,
   },
   navLabel: {
     color: theme.colors.muted,
-    fontSize: 8,
+    fontSize: 10,
     fontWeight: "600",
   },
   navLabelActive: {
@@ -747,9 +752,9 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.blueSoft,
   },
   headerButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
   },
