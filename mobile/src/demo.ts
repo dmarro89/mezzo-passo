@@ -4,9 +4,8 @@ export const BANNER_IMAGE = require("../assets/mock-banner.jpg");
 
 import { EventItem, Me, Member, MessageItem, NotificationItem, Participant, Stats } from "./types";
 
-const now = new Date();
 function at(days: number, hour: number, minute = 0) {
-  const d = new Date(now);
+  const d = new Date("2024-07-18T12:00:00+02:00");
   d.setDate(d.getDate() + days);
   d.setHours(hour, minute, 0, 0);
   return d.toISOString();
@@ -36,7 +35,7 @@ export const cullatoreMe: Me = {
     firstName: "Davide",
     lastName: "Esposito",
     birthDate: "1992-03-14",
-    position: "Ritiro sinistro",
+    position: "Base sinistra",
   },
   paranza: managerMe.paranza,
 };
@@ -89,7 +88,7 @@ export const demoMessages: MessageItem[] = [
     title: "Prova di sabato",
     body: "Ragazzi, ci vediamo sabato alle 20:00 in Zona Duomo per la prova della paranza.",
     senderName: "Luca Iorio",
-    createdAt: new Date().toISOString(),
+    createdAt: at(0, 10, 24),
   },
   {
     id: 2,
@@ -140,7 +139,7 @@ export const demoNotifications: NotificationItem[] = [
     kind: "event",
     title: "Promemoria evento",
     body: "Prova della paranza oggi alle 20:00. Non mancare!",
-    createdAt: new Date().toISOString(),
+    createdAt: at(0, 10, 30),
   },
   {
     id: "n2",
