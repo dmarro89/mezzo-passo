@@ -1,39 +1,32 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Switch,
-  Text,
-  View,
-} from "react-native";
-import { api } from "../api";
+  demoEvents,
+  demoMembers,
+  demoMessages,
+  demoNotifications,
+  demoParticipants,
+  demoStats,
+  managerMe,
+} from "../demo";
+import { EventItem, MessageItem, Participant } from "../types";
 import {
-  EventItem,
-  Me,
-  Member,
-  MessageItem,
-  NotificationItem,
-  Participant,
-  Stats,
-} from "../types";
-import {
+  Avatar,
   Banner,
   BottomNav,
   Brand,
   Button,
   Card,
-  Empty,
   Field,
   Metric,
   Pill,
   Screen,
+  SectionTitle,
   Title,
 } from "../ui";
 import { theme } from "../theme";
 
 type Tab = "home" | "events" | "messages" | "members" | "stats";
-
 const nav = [
   { key: "home", label: "Home", icon: "⌂" },
   { key: "events", label: "Eventi", icon: "□" },
@@ -53,211 +46,144 @@ const eventTypes = [
   "Domenica della festa",
 ];
 
-export function ManagerApp({
-  token,
-  onLogout,
-}: {
-  token: string;
-  onLogout: () => void;
-}) {
+export function ManagerApp({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>("home");
-  const [me, setMe] = useState<Me>();
-  const [events, setEvents] = useState<EventItem[]>([]);
-  const [messages, setMessages] = useState<MessageItem[]>([]);
-  const [members, setMembers] = useState<Member[]>([]);
-  const [stats, setStats] = useState<Stats>();
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [participantEvent, setParticipantEvent] = useState<EventItem>();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  const load = useCallback(async () => {
-    try {
-      setError("");
-      const [meData, eventData, messageData, memberData, statsData, notificationData] =
-        await Promise.all([
-          api.me(token),
-          api.events(token),
-          api.messages(token),
-          api.members(token),
-          api.stats(token),
-          api.notifications(token),
-        ]);
-      setMe(meData);
-      setEvents(eventData);
-      setMessages(messageData);
-      setMembers(memberData);
-      setStats(statsData);
-      setNotifications(notificationData);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore di caricamento");
-    } finally {
-      setLoading(false);
-    }
-  }, [token]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  async function showParticipants(event: EventItem) {
-    setParticipantEvent(event);
-    setParticipants(await api.participants(token, event.id));
-  }
-
-  if (loading) {
-    return (
-      <Screen>
-        <ActivityIndicator color={theme.colors.blue} />
-      </Screen>
-    );
-  }
-
-  if (participantEvent) {
-    const confirmed = participants.filter((p) => p.status === "confirmed").length;
-    const maybe = participants.filter((p) => p.status === "maybe").length;
-    const absent = participants.filter((p) => p.status === "absent").length;
-    return (
-      <Screen>
-        <Brand compact />
-        <Button title="← Torna agli eventi" variant="ghost" onPress={() => setParticipantEvent(undefined)} />
-        <Title subtitle={formatEventDate(participantEvent)}>
-          {participantEvent.title}
-        </Title>
-        <View style={styles.metrics}>
-          <Metric label="Confermati" value={confirmed} />
-          <Metric label="Forse" value={maybe} />
-          <Metric label="Assenti" value={absent} />
-        </View>
-        {participants.map((p) => (
-          <Card key={p.userId}>
-            <View style={styles.rowBetween}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{p.name}</Text>
-                <Text style={styles.muted}>{p.position}</Text>
-              </View>
-              <Pill label={labelStatus(p.status)} active={p.status === "confirmed"} />
-            </View>
-          </Card>
-        ))}
-      </Screen>
-    );
-  }
+  const [events, setEvents] = useState<EventItem[]>(demoEvents);
+  const [messages, setMessages] = useState<MessageItem[]>(demoMessages);
+  const [selectedEvent, setSelectedEvent] = useState<EventItem>();
 
   return (
     <View style={{ flex: 1 }}>
-      {tab === "home" && (
-        <ManagerHome me={me} stats={stats} events={events} error={error} onRefresh={load} />
+      {selectedEvent ? (
+        <ParticipantsView
+          event={selectedEvent}
+          participants={demoParticipants}
+          onBack={() => setSelectedEvent(undefined)}
+        />
+      ) : (
+        <>
+          {tab === "home" && <Home events={events} onOpenEvent={setSelectedEvent} />}
+          {tab === "events" && (
+            <Events
+              events={events}
+              setEvents={setEvents}
+              onOpenParticipants={setSelectedEvent}
+            />
+          )}
+          {tab === "messages" && (
+            <Messages messages={messages} setMessages={setMessages} />
+          )}
+          {tab === "members" && <Members />}
+          {tab === "stats" && <Stats onLogout={onLogout} />}
+          <BottomNav items={nav} active={tab} onChange={(key) => setTab(key as Tab)} />
+        </>
       )}
-      {tab === "events" && (
-        <ManagerEvents token={token} events={events} onCreated={load} onParticipants={showParticipants} />
-      )}
-      {tab === "messages" && (
-        <ManagerMessages token={token} messages={messages} onCreated={load} />
-      )}
-      {tab === "members" && <ManagerMembers members={members} />}
-      {tab === "stats" && (
-        <ManagerStats stats={stats} notifications={notifications} onLogout={onLogout} />
-      )}
-      <BottomNav items={nav} active={tab} onChange={(key) => setTab(key as Tab)} />
     </View>
   );
 }
 
-function ManagerHome({
-  me,
-  stats,
+function Home({
   events,
-  error,
-  onRefresh,
+  onOpenEvent,
 }: {
-  me?: Me;
-  stats?: Stats;
   events: EventItem[];
-  error: string;
-  onRefresh: () => void;
+  onOpenEvent: (event: EventItem) => void;
 }) {
   const next = events[0];
   return (
-    <Screen>
-      <View style={styles.headerRow}>
+    <Screen key="manager-home">
+      <View style={styles.topRow}>
         <Brand compact />
-        <Pill label="Capoparanza" />
+        <View style={styles.settingsDot}><Text style={styles.settingsGlyph}>⚙</Text></View>
       </View>
-      <Banner name={me?.paranza?.name} />
-      <Title subtitle={me?.paranza?.name}>Ciao {me?.user.firstName ?? "Luca"}</Title>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+
+      <Banner />
+      <View style={styles.greetingRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.hello}>Ciao Luca</Text>
+          <Text style={styles.subtle}>Capoparanza di Orgoglio Nolano</Text>
+        </View>
+        <Avatar initials="LI" size={46} />
+      </View>
+
       <View style={styles.metrics}>
-        <Metric label="Cullatori" value={stats?.memberCount ?? "—"} />
-        <Metric label="Attivi" value={stats?.activeMemberCount ?? "—"} />
-        <Metric label="Eventi" value={stats?.eventCount ?? "—"} />
-        <Metric label="Presenza" value={stats ? `${Math.round(stats.attendanceRate)}%` : "—"} />
+        <Metric label="Cullatori" value={demoStats.memberCount} />
+        <Metric label="Uomini attivi" value={demoStats.activeMemberCount} />
+        <Metric label="Eventi" value={demoStats.eventCount} />
+        <Metric label="Presenza media" value="75%" />
       </View>
-      <Text style={styles.sectionTitle}>Prossimo evento</Text>
-      {next ? <EventCard event={next} /> : <Empty text="Nessun evento." />}
-      <Button title="Aggiorna dati" variant="ghost" onPress={onRefresh} />
+
+      <SectionTitle action="Vedi tutti">Prossimi eventi</SectionTitle>
+      {next ? (
+        <Pressable onPress={() => onOpenEvent(next)}>
+          <Card elevated>
+            <EventRow event={next} />
+          </Card>
+        </Pressable>
+      ) : null}
+
+      <SectionTitle>Azioni rapide</SectionTitle>
+      <View style={styles.quickGrid}>
+        <QuickCard icon="＋" title="Nuovo evento" subtitle="Organizza un appuntamento" />
+        <QuickCard icon="✉" title="Messaggio" subtitle="Scrivi alla paranza" />
+      </View>
     </Screen>
   );
 }
 
-function ManagerEvents({
-  token,
+function Events({
   events,
-  onCreated,
-  onParticipants,
+  setEvents,
+  onOpenParticipants,
 }: {
-  token: string;
   events: EventItem[];
-  onCreated: () => void;
-  onParticipants: (event: EventItem) => void;
+  setEvents: React.Dispatch<React.SetStateAction<EventItem[]>>;
+  onOpenParticipants: (event: EventItem) => void;
 }) {
   const [creating, setCreating] = useState(false);
   const [type, setType] = useState(eventTypes[0] ?? "Prova della paranza");
   const [title, setTitle] = useState("Prova della paranza");
   const [location, setLocation] = useState("Zona Duomo, Nola");
-  const [description, setDescription] = useState("Prova generale della paranza.");
-  const [attire, setAttire] = useState("Maglia della paranza e scarpe comode");
+  const [description, setDescription] = useState("Prova generale in vista della festa.");
   const [required, setRequired] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
 
-  const defaultTimes = useMemo(() => {
-    const start = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+  function create() {
+    const start = new Date();
+    start.setDate(start.getDate() + 12);
     start.setHours(20, 0, 0, 0);
-    const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-    return { start: start.toISOString(), end: end.toISOString() };
-  }, []);
-
-  async function save() {
-    try {
-      setSaving(true);
-      setError("");
-      await api.createEvent(token, {
+    const end = new Date(start);
+    end.setHours(22, 0, 0, 0);
+    setEvents((current) => [
+      {
+        id: Date.now(),
         type,
         title,
         description,
         location,
-        startsAt: defaultTimes.start,
-        endsAt: defaultTimes.end,
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
         required,
-        attire,
-      });
-      setCreating(false);
-      await onCreated();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Errore");
-    } finally {
-      setSaving(false);
-    }
+        attire: "Maglia della paranza",
+        participantCount: 0,
+        rsvp: "",
+      },
+      ...current,
+    ]);
+    setCreating(false);
   }
 
   if (creating) {
     return (
-      <Screen>
-        <Brand compact />
-        <Title subtitle="Organizza un nuovo appuntamento.">Nuovo evento</Title>
-        <Text style={styles.sectionTitle}>Tipo di evento</Text>
+      <Screen key="manager-create-event">
+        <View style={styles.topRow}>
+          <Pressable onPress={() => setCreating(false)}>
+            <Text style={styles.back}>‹</Text>
+          </Pressable>
+          <Text style={styles.headerTitle}>Nuovo evento</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <Text style={styles.fieldCaption}>TIPO DI EVENTO</Text>
         <View style={styles.pills}>
           {eventTypes.map((item) => (
             <Pill
@@ -271,98 +197,120 @@ function ManagerEvents({
             />
           ))}
         </View>
+
         <Field label="Titolo" value={title} onChangeText={setTitle} />
+        <View style={styles.twoCol}>
+          <Card style={{ flex: 1 }}>
+            <Text style={styles.smallLabel}>DATA</Text>
+            <Text style={styles.cardStrong}>20 Luglio</Text>
+          </Card>
+          <Card style={{ flex: 1 }}>
+            <Text style={styles.smallLabel}>ORARIO</Text>
+            <Text style={styles.cardStrong}>20:00 — 22:00</Text>
+          </Card>
+        </View>
         <Field label="Luogo" value={location} onChangeText={setLocation} />
         <Field label="Descrizione" value={description} onChangeText={setDescription} multiline />
-        <Field label="Abbigliamento / promemoria" value={attire} onChangeText={setAttire} />
-        <View style={styles.rowBetween}>
-          <Text style={styles.name}>Richiede conferma</Text>
-          <Switch value={required} onValueChange={setRequired} trackColor={{ true: theme.colors.blue }} />
-        </View>
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Button title={saving ? "Salvataggio..." : "Crea evento"} disabled={saving} onPress={save} />
-        <Button title="Annulla" variant="ghost" onPress={() => setCreating(false)} />
+
+        <Card>
+          <View style={styles.topRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardStrong}>Richiede conferma</Text>
+              <Text style={styles.subtle}>I cullatori dovranno rispondere all'invito.</Text>
+            </View>
+            <Switch
+              value={required}
+              onValueChange={setRequired}
+              trackColor={{ false: "#D9E0EA", true: theme.colors.blue }}
+            />
+          </View>
+        </Card>
+
+        <Button title="Crea evento" onPress={create} />
       </Screen>
     );
   }
 
   return (
-    <Screen>
-      <View style={styles.headerRow}>
+    <Screen key="manager-events">
+      <View style={styles.topRow}>
         <Title>Eventi</Title>
-        <Pressable onPress={() => setCreating(true)}>
+        <Pressable onPress={() => setCreating(true)} style={styles.plusButton}>
           <Text style={styles.plus}>＋</Text>
         </Pressable>
       </View>
       <Button title="Crea nuovo evento" onPress={() => setCreating(true)} />
       {events.map((event) => (
-        <Card key={event.id}>
-          <EventCard event={event} compact />
-          <Button
-            title="Vedi partecipanti"
-            variant="secondary"
-            onPress={() => onParticipants(event)}
-          />
-        </Card>
+        <Pressable key={event.id} onPress={() => onOpenParticipants(event)}>
+          <Card elevated>
+            <EventRow event={event} />
+          </Card>
+        </Pressable>
       ))}
     </Screen>
   );
 }
 
-function ManagerMessages({
-  token,
+function Messages({
   messages,
-  onCreated,
+  setMessages,
 }: {
-  token: string;
   messages: MessageItem[];
-  onCreated: () => void;
+  setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
 }) {
   const [composing, setComposing] = useState(false);
-  const [title, setTitle] = useState("Comunicazione alla paranza");
+  const [subject, setSubject] = useState("Prova di sabato");
   const [body, setBody] = useState("");
-  const [saving, setSaving] = useState(false);
 
-  async function send() {
-    setSaving(true);
-    try {
-      await api.createMessage(token, title, body);
-      setBody("");
-      setComposing(false);
-      await onCreated();
-    } finally {
-      setSaving(false);
-    }
+  function send() {
+    if (!body.trim()) return;
+    setMessages((current) => [
+      {
+        id: Date.now(),
+        title: subject,
+        body,
+        senderName: "Luca Iorio",
+        createdAt: new Date().toISOString(),
+      },
+      ...current,
+    ]);
+    setBody("");
+    setComposing(false);
   }
 
   return (
-    <Screen>
-      <View style={styles.headerRow}>
+    <Screen key="manager-messages">
+      <View style={styles.topRow}>
         <Title>Messaggi</Title>
-        <Pressable onPress={() => setComposing(!composing)}>
+        <Pressable onPress={() => setComposing(!composing)} style={styles.plusButton}>
           <Text style={styles.plus}>＋</Text>
         </Pressable>
       </View>
+
       {composing ? (
-        <Card>
-          <Field label="Oggetto" value={title} onChangeText={setTitle} />
+        <Card elevated>
+          <Text style={styles.fieldCaption}>DESTINATARI</Text>
+          <View style={styles.pills}>
+            <Pill label="Tutti i cullatori · 32" active />
+            <Pill label="Seleziona cullatori" />
+          </View>
+          <Field label="Oggetto" value={subject} onChangeText={setSubject} />
           <Field label="Messaggio" value={body} onChangeText={setBody} multiline />
-          <Button
-            title={saving ? "Invio..." : "Invia a tutti i cullatori"}
-            disabled={saving || !body.trim()}
-            onPress={send}
-          />
+          <Button title="Invia messaggio" onPress={send} />
         </Card>
       ) : (
         <Button title="Nuovo messaggio" onPress={() => setComposing(true)} />
       )}
+
       {messages.map((message) => (
         <Card key={message.id}>
-          <View style={styles.rowBetween}>
-            <Text style={styles.name}>{message.title}</Text>
-            <Text style={styles.date}>{formatDate(message.createdAt)}</Text>
+          <View style={styles.topRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.cardStrong}>{message.title}</Text>
+              <Text style={styles.subtle}>{message.senderName}</Text>
+            </View>
+            <Text style={styles.dateText}>{formatShortDate(message.createdAt)}</Text>
           </View>
-          <Text style={styles.muted}>{message.senderName}</Text>
           <Text style={styles.body}>{message.body}</Text>
         </Card>
       ))}
@@ -370,62 +318,73 @@ function ManagerMessages({
   );
 }
 
-function ManagerMembers({ members }: { members: Member[] }) {
+function Members() {
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const filtered = members.filter((m) =>
-    filter === "all" ? true : filter === "active" ? m.isActive : !m.isActive,
+  const filtered = demoMembers.filter((member) =>
+    filter === "all" ? true : filter === "active" ? member.isActive : !member.isActive,
   );
+
   return (
-    <Screen>
-      <Title subtitle="Membri e posizioni nel Giglio.">I miei cullatori</Title>
-      <View style={styles.pills}>
-        <Pill label={`Tutti ${members.length}`} active={filter === "all"} onPress={() => setFilter("all")} />
-        <Pill label="Attivi" active={filter === "active"} onPress={() => setFilter("active")} />
-        <Pill label="Non attivi" active={filter === "inactive"} onPress={() => setFilter("inactive")} />
+    <Screen key="manager-members">
+      <Title subtitle="Visualizza e gestisci i membri della tua paranza.">
+        I miei cullatori
+      </Title>
+      <View style={styles.searchMock}>
+        <Text style={styles.searchGlyph}>⌕</Text>
+        <Text style={styles.searchText}>Cerca un cullatore...</Text>
       </View>
+      <View style={styles.pills}>
+        <Pill label="Tutti 32" active={filter === "all"} onPress={() => setFilter("all")} />
+        <Pill label="Attivi 28" active={filter === "active"} onPress={() => setFilter("active")} />
+        <Pill label="Non attivi 4" active={filter === "inactive"} onPress={() => setFilter("inactive")} />
+      </View>
+
       {filtered.map((member) => (
-        <Card key={member.userId}>
-          <View style={styles.rowBetween}>
-            <View>
-              <Text style={styles.name}>{member.name}</Text>
-              <Text style={styles.muted}>{member.position}</Text>
-            </View>
-            <Pill label={member.isActive ? "Attivo" : "Non attivo"} active={member.isActive} />
+        <View key={member.userId} style={styles.memberRow}>
+          <Avatar initials={initials(member.name)} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardStrong}>{member.name}</Text>
+            <Text style={styles.subtle}>{member.position}</Text>
           </View>
-        </Card>
+          <Pill
+            label={member.isActive ? "Attivo" : "Non attivo"}
+            tone={member.isActive ? "success" : "default"}
+          />
+        </View>
       ))}
     </Screen>
   );
 }
 
-function ManagerStats({
-  stats,
-  notifications,
-  onLogout,
-}: {
-  stats?: Stats;
-  notifications: NotificationItem[];
-  onLogout: () => void;
-}) {
+function Stats({ onLogout }: { onLogout: () => void }) {
   return (
-    <Screen>
-      <Title subtitle="Una vista rapida sull'andamento della paranza.">Statistiche</Title>
-      <Card style={{ alignItems: "center", paddingVertical: 28 }}>
+    <Screen key="manager-stats">
+      <Title subtitle="Monitora la partecipazione agli eventi.">Statistiche</Title>
+      <Card elevated style={{ alignItems: "center", paddingVertical: 26 }}>
+        <Text style={styles.fieldCaption}>TASSO DI PRESENZA</Text>
         <View style={styles.rateCircle}>
-          <Text style={styles.rateValue}>{Math.round(stats?.attendanceRate ?? 0)}%</Text>
-          <Text style={styles.muted}>presenza</Text>
+          <Text style={styles.rateValue}>75%</Text>
+        </View>
+        <Text style={styles.subtle}>24 presenti su 32 cullatori · ultimo evento</Text>
+      </Card>
+
+      <SectionTitle>Andamento presenze</SectionTitle>
+      <Card>
+        <View style={styles.chart}>
+          {[58, 46, 72, 68, 83, 75].map((value, index) => (
+            <View key={index} style={styles.chartColumn}>
+              <View style={[styles.bar, { height: value }]} />
+              <Text style={styles.barLabel}>{["Apr", "Mag", "Giu", "Lug", "Ago", "Set"][index]}</Text>
+            </View>
+          ))}
         </View>
       </Card>
-      <View style={styles.metrics}>
-        <Metric label="Cullatori" value={stats?.memberCount ?? "—"} />
-        <Metric label="Attivi" value={stats?.activeMemberCount ?? "—"} />
-        <Metric label="Eventi" value={stats?.eventCount ?? "—"} />
-      </View>
-      <Text style={styles.sectionTitle}>Promemoria</Text>
-      {notifications.slice(0, 4).map((n) => (
-        <Card key={n.id}>
-          <Text style={styles.name}>{n.title}</Text>
-          <Text style={styles.body}>{n.body}</Text>
+
+      <SectionTitle>Promemoria</SectionTitle>
+      {demoNotifications.map((item) => (
+        <Card key={item.id}>
+          <Text style={styles.cardStrong}>{item.title}</Text>
+          <Text style={styles.body}>{item.body}</Text>
         </Card>
       ))}
       <Button title="Esci dalla demo" variant="ghost" onPress={onLogout} />
@@ -433,75 +392,152 @@ function ManagerStats({
   );
 }
 
-function EventCard({ event, compact }: { event: EventItem; compact?: boolean }) {
+function ParticipantsView({
+  event,
+  participants,
+  onBack,
+}: {
+  event: EventItem;
+  participants: Participant[];
+  onBack: () => void;
+}) {
+  const counts = useMemo(
+    () => ({
+      confirmed: participants.filter((p) => p.status === "confirmed").length,
+      maybe: participants.filter((p) => p.status === "maybe").length,
+      absent: participants.filter((p) => p.status === "absent").length,
+    }),
+    [participants],
+  );
+
   return (
-    <View style={{ gap: 8 }}>
-      <View style={styles.rowBetween}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{event.title}</Text>
-          <Text style={styles.muted}>{formatEventDate(event)}</Text>
-        </View>
-        <View style={styles.dateBadge}>
-          <Text style={styles.dateBadgeDay}>
-            {new Date(event.startsAt).getDate().toString().padStart(2, "0")}
-          </Text>
-          <Text style={styles.dateBadgeMonth}>
-            {new Date(event.startsAt)
-              .toLocaleDateString("it-IT", { month: "short" })
-              .toUpperCase()}
-          </Text>
-        </View>
+    <Screen key="participants">
+      <View style={styles.topRow}>
+        <Pressable onPress={onBack}><Text style={styles.back}>‹</Text></Pressable>
+        <Text style={styles.headerTitle}>{event.title}</Text>
+        <View style={{ width: 24 }} />
       </View>
-      {!compact ? <Text style={styles.body}>{event.description}</Text> : null}
-      <Text style={styles.muted}>⌖ {event.location}</Text>
-      {event.attire ? <Text style={styles.muted}>Maglia · {event.attire}</Text> : null}
+      <Text style={styles.subtle}>{formatEvent(event)} · {event.location}</Text>
+
+      <View style={styles.metrics}>
+        <Metric label="Confermati" value={counts.confirmed} />
+        <Metric label="Forse" value={counts.maybe} />
+        <Metric label="Assenti" value={counts.absent} />
+      </View>
+
+      <View style={styles.searchMock}>
+        <Text style={styles.searchGlyph}>⌕</Text>
+        <Text style={styles.searchText}>Cerca un cullatore...</Text>
+      </View>
+
+      {participants.map((p) => (
+        <View key={p.userId} style={styles.memberRow}>
+          <Avatar initials={initials(p.name)} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.cardStrong}>{p.name}</Text>
+            <Text style={styles.subtle}>{p.position}</Text>
+          </View>
+          <Pill
+            label={statusLabel(p.status)}
+            tone={p.status === "confirmed" ? "success" : p.status === "maybe" ? "maybe" : "danger"}
+          />
+        </View>
+      ))}
+    </Screen>
+  );
+}
+
+function EventRow({ event }: { event: EventItem }) {
+  const date = new Date(event.startsAt);
+  return (
+    <View style={styles.eventRow}>
+      <View style={styles.dateBadge}>
+        <Text style={styles.dateDay}>{date.getDate().toString().padStart(2, "0")}</Text>
+        <Text style={styles.dateMonth}>
+          {date.toLocaleDateString("it-IT", { month: "short" }).toUpperCase()}
+        </Text>
+      </View>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.cardStrong}>{event.title}</Text>
+        <Text style={styles.subtle}>{formatEvent(event)}</Text>
+        <Text style={styles.subtle}>{event.location}</Text>
+        <Text style={styles.peopleText}>♟ {event.participantCount} partecipanti</Text>
+      </View>
+      <Text style={styles.chevron}>›</Text>
     </View>
   );
 }
 
-function formatEventDate(event: EventItem) {
+function QuickCard({ icon, title, subtitle }: { icon: string; title: string; subtitle: string }) {
+  return (
+    <Card style={styles.quickCard}>
+      <View style={styles.quickIcon}><Text style={styles.quickIconText}>{icon}</Text></View>
+      <Text style={styles.cardStrong}>{title}</Text>
+      <Text style={styles.subtle}>{subtitle}</Text>
+    </Card>
+  );
+}
+
+function formatEvent(event: EventItem) {
   const date = new Date(event.startsAt);
-  return `${date.toLocaleDateString("it-IT", {
+  return date.toLocaleDateString("it-IT", {
     weekday: "short",
     day: "2-digit",
     month: "short",
-  })} · ${date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`;
+  }) + " · " + date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
 }
 
-function formatDate(value: string) {
+function formatShortDate(value: string) {
   return new Date(value).toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
 }
 
-function labelStatus(status: Participant["status"]) {
+function initials(name: string) {
+  return name.split(" ").map((x) => x[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function statusLabel(status: Participant["status"]) {
   if (status === "confirmed") return "Confermato";
   if (status === "maybe") return "Forse";
-  if (status === "absent") return "Assente";
-  return "Non risposto";
+  return "Assente";
 }
 
 const styles = StyleSheet.create({
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  rowBetween: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
-  metrics: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  sectionTitle: { color: theme.colors.ink, fontSize: 17, fontWeight: "800", marginTop: 4 },
-  name: { color: theme.colors.ink, fontSize: 15, fontWeight: "800" },
-  muted: { color: theme.colors.text, fontSize: 12, lineHeight: 18 },
-  body: { color: theme.colors.text, fontSize: 14, lineHeight: 20 },
-  error: { color: theme.colors.danger, fontSize: 13, fontWeight: "700" },
-  plus: { color: theme.colors.blue, fontSize: 30, fontWeight: "500" },
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  greetingRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 12 },
+  hello: { color: theme.colors.blueDark, fontSize: 28, fontWeight: "900", letterSpacing: -0.9 },
+  subtle: { color: theme.colors.text, fontSize: 12, lineHeight: 18 },
+  metrics: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  quickGrid: { flexDirection: "row", gap: 10 },
+  quickCard: { flex: 1, minHeight: 130 },
+  quickIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: theme.colors.blueSoft, alignItems: "center", justifyContent: "center" },
+  quickIconText: { color: theme.colors.blue, fontSize: 18, fontWeight: "900" },
+  settingsDot: { width: 34, height: 34, borderRadius: 17, borderWidth: 1, borderColor: theme.colors.line, backgroundColor: "#FFFFFF", alignItems: "center", justifyContent: "center" },
+  settingsGlyph: { fontSize: 14, color: theme.colors.blueDark },
+  plusButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: theme.colors.blueSoft, alignItems: "center", justifyContent: "center" },
+  plus: { color: theme.colors.blue, fontSize: 23, lineHeight: 25 },
+  back: { color: theme.colors.blue, fontSize: 38, lineHeight: 38 },
+  headerTitle: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
+  fieldCaption: { color: theme.colors.muted, fontSize: 10, fontWeight: "900", letterSpacing: 1.4 },
   pills: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  date: { color: theme.colors.muted, fontSize: 11, fontWeight: "700" },
-  dateBadge: { minWidth: 52, borderRadius: 12, backgroundColor: theme.colors.blueSoft, padding: 8, alignItems: "center" },
-  dateBadgeDay: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "800" },
-  dateBadgeMonth: { color: theme.colors.blue, fontSize: 10, fontWeight: "800" },
-  rateCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    borderWidth: 16,
-    borderColor: theme.colors.blue,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rateValue: { color: theme.colors.blueDark, fontSize: 34, fontWeight: "900" },
+  twoCol: { flexDirection: "row", gap: 8 },
+  smallLabel: { color: theme.colors.muted, fontSize: 9, fontWeight: "900", letterSpacing: 1.1 },
+  cardStrong: { color: theme.colors.ink, fontSize: 14, fontWeight: "900" },
+  body: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
+  dateText: { color: theme.colors.muted, fontSize: 10, fontWeight: "700" },
+  searchMock: { minHeight: 44, borderRadius: 12, backgroundColor: "#F1F4F8", flexDirection: "row", alignItems: "center", paddingHorizontal: 13, gap: 8 },
+  searchGlyph: { color: theme.colors.muted, fontSize: 18 },
+  searchText: { color: theme.colors.muted, fontSize: 13 },
+  memberRow: { minHeight: 58, flexDirection: "row", alignItems: "center", gap: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: theme.colors.line },
+  rateCircle: { width: 132, height: 132, borderRadius: 66, borderWidth: 14, borderColor: theme.colors.blue, alignItems: "center", justifyContent: "center", marginVertical: 8 },
+  rateValue: { color: theme.colors.blueDark, fontSize: 32, fontWeight: "900" },
+  chart: { height: 130, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between", paddingTop: 8 },
+  chartColumn: { flex: 1, alignItems: "center", justifyContent: "flex-end", gap: 6 },
+  bar: { width: 20, borderRadius: 5, backgroundColor: theme.colors.blue },
+  barLabel: { color: theme.colors.muted, fontSize: 9, fontWeight: "700" },
+  eventRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  dateBadge: { width: 54, height: 58, borderRadius: 13, backgroundColor: theme.colors.blueSoft, alignItems: "center", justifyContent: "center" },
+  dateDay: { color: theme.colors.blueDark, fontSize: 20, fontWeight: "900" },
+  dateMonth: { color: theme.colors.blue, fontSize: 9, fontWeight: "900" },
+  peopleText: { color: theme.colors.blue, fontSize: 10, fontWeight: "700" },
+  chevron: { color: theme.colors.blue, fontSize: 24, fontWeight: "400" },
 });
