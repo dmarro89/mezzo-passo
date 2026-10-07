@@ -109,7 +109,7 @@ function Home({
 }) {
   const next = events[0];
   return (
-    <Screen key="cullatore-home">
+    <Screen key="cullatore-home" withBottomNav>
       <View style={styles.homeHeader}>
         <HeaderButton icon="chevron-back" />
         <Brand compact />
@@ -150,7 +150,7 @@ function Events({
   onOpen: (event: EventItem) => void;
 }) {
   return (
-    <Screen key="cullatore-events">
+    <Screen key="cullatore-events" withBottomNav>
       <PageHeader title="Eventi" />
       <View style={styles.filterRow}>
         <Pill label="Tutti" active />
@@ -232,7 +232,7 @@ function EventDetail({
 function Messages() {
   const [filter, setFilter] = useState<"all" | "manager" | "paranza">("all");
   return (
-    <Screen key="cullatore-messages">
+    <Screen key="cullatore-messages" withBottomNav>
       <PageHeader title="Messaggi" />
       <View style={styles.search}>
         <Ionicons name="search-outline" size={16} color={theme.colors.muted} />
@@ -276,7 +276,7 @@ function Calendar({
   const monthLabel = useMemo(() => "Luglio 2024", []);
 
   return (
-    <Screen key="cullatore-calendar">
+    <Screen key="cullatore-calendar" withBottomNav>
       <PageHeader title="Calendario eventi" />
       <Card style={styles.calendarCard}>
         <View style={styles.calendarHeader}>
@@ -322,7 +322,7 @@ function Calendar({
 
 function Profile({ onLogout }: { onLogout: () => void }) {
   return (
-    <Screen key="cullatore-profile">
+    <Screen key="cullatore-profile" withBottomNav>
       <PageHeader title="Il mio profilo" actionIcon="settings-outline" />
 
       <View style={styles.profileHeader}>
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   homeHeader: {
-    minHeight: 34,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -560,39 +560,39 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: -0.8,
   },
-  subtle: { color: theme.colors.text, fontSize: 13, lineHeight: 18 },
-  metricRow: { flexDirection: "row", gap: 7 },
-  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 },
-  eventRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  subtle: { color: theme.colors.text, fontSize: 15, lineHeight: 21 },
+  metricRow: { flexDirection: "row", gap: 10 },
+  filterRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  eventRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   dateBadge: {
     width: 48,
     height: 58,
-    borderRadius: 8,
+    borderRadius: 12,
     backgroundColor: theme.colors.blueSoft,
     alignItems: "center",
     justifyContent: "center",
   },
-  dateWeek: { color: theme.colors.blue, fontSize: 8, fontWeight: "900" },
+  dateWeek: { color: theme.colors.blue, fontSize: 11, fontWeight: "900" },
   dateDay: {
     color: theme.colors.blueDark,
     fontSize: 18,
     lineHeight: 19,
     fontWeight: "900",
   },
-  dateMonth: { color: theme.colors.blue, fontSize: 8, fontWeight: "900" },
-  eventRowTitle: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
+  dateMonth: { color: theme.colors.blue, fontSize: 11, fontWeight: "900" },
+  eventRowTitle: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "900" },
   peopleInline: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
-  peopleText: { color: theme.colors.blue, fontSize: 10.5, fontWeight: "700" },
-  rsvp: { gap: 6 },
-  rsvpRow: { flexDirection: "row", gap: 6 },
+  peopleText: { color: theme.colors.blue, fontSize: 12, fontWeight: "700" },
+  rsvp: { gap: 9 },
+  rsvpRow: { flexDirection: "row", gap: 9 },
   pageHeader: {
-    minHeight: 34,
+    minHeight: 44,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  pageTitle: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
-  eventImage: { height: 150, borderRadius: 12, overflow: "hidden" },
+  pageTitle: { color: theme.colors.blueDark, fontSize: 20, fontWeight: "900" },
+  eventImage: { height: 180, borderRadius: 16, overflow: "hidden" },
   eventImageStyle: { borderRadius: 12 },
   eventShade: {
     ...StyleSheet.absoluteFill,
@@ -605,21 +605,21 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   infoLine: { flexDirection: "row", alignItems: "center", gap: 6 },
-  infoLineText: { color: theme.colors.blue, fontSize: 13 },
-  body: { color: theme.colors.text, fontSize: 13, lineHeight: 19 },
+  infoLineText: { color: theme.colors.blue, fontSize: 15 },
+  body: { color: theme.colors.text, fontSize: 15, lineHeight: 22 },
   organizer: { gap: 5 },
-  organizerLabel: { color: theme.colors.text, fontSize: 11.5, fontWeight: "700" },
+  organizerLabel: { color: theme.colors.text, fontSize: 13, fontWeight: "700" },
   organizerRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  personName: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
+  personName: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
   infoRow: {
-    minHeight: 52,
+    minHeight: 60,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.line,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  infoLabel: { color: theme.colors.text, fontSize: 12, width: 84 },
+  infoLabel: { color: theme.colors.text, fontSize: 13, width: 96 },
   infoValue: {
     color: theme.colors.blueDark,
     fontSize: 10,
@@ -628,33 +628,33 @@ const styles = StyleSheet.create({
   },
   flexSpacer: { flex: 1, minHeight: 3 },
   search: {
-    height: 46,
+    height: 50,
     borderRadius: 9,
     backgroundColor: "#F1F5FA",
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     gap: 7,
   },
-  searchPlaceholder: { color: theme.colors.muted, fontSize: 13 },
+  searchPlaceholder: { color: theme.colors.muted, fontSize: 14 },
   messageRow: {
-    minHeight: 76,
+    minHeight: 82,
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.line,
   },
-  timeText: { color: theme.colors.muted, fontSize: 10.5 },
-  messagePreview: { color: theme.colors.text, fontSize: 11.5 },
+  timeText: { color: theme.colors.muted, fontSize: 12 },
+  messagePreview: { color: theme.colors.text, fontSize: 13 },
   unreadDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: theme.colors.blue },
-  calendarCard: { gap: 6 },
+  calendarCard: { gap: 10 },
   calendarHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  calendarMonth: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
+  calendarMonth: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "900" },
   weekRow: { flexDirection: "row" },
   weekDay: {
     width: "14.2857%",
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   daysGrid: { flexDirection: "row", flexWrap: "wrap" },
-  dayCell: { width: "14.2857%", alignItems: "center", minHeight: 36 },
+  dayCell: { width: "14.2857%", alignItems: "center", minHeight: 42 },
   dayCircle: {
     width: 24,
     height: 24,
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   dayCircleActive: { backgroundColor: theme.colors.blue },
-  dayText: { color: theme.colors.text, fontSize: 10.5, fontWeight: "700" },
+  dayText: { color: theme.colors.text, fontSize: 12, fontWeight: "700" },
   dayTextActive: { color: "#FFFFFF", fontWeight: "900" },
   dayDot: {
     width: 3,
@@ -682,16 +682,16 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.blue,
     marginTop: 1,
   },
-  profileHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
-  profileName: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
-  profileParanza: { flexDirection: "row", alignItems: "center", gap: 8 },
+  profileHeader: { flexDirection: "row", alignItems: "center", gap: 14 },
+  profileName: { color: theme.colors.blueDark, fontSize: 20, fontWeight: "900" },
+  profileParanza: { flexDirection: "row", alignItems: "center", gap: 12 },
   profileParanzaCopy: { flex: 1, gap: 2 },
-  groupTitle: { color: theme.colors.blueDark, fontSize: 15, fontWeight: "900" },
+  groupTitle: { color: theme.colors.blueDark, fontSize: 18, fontWeight: "900" },
   notificationRow: {
-    minHeight: 76,
+    minHeight: 82,
     flexDirection: "row",
     alignItems: "center",
-    gap: 9,
+    gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.line,
   },
@@ -703,7 +703,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  notificationTitle: { color: theme.colors.blueDark, fontSize: 16, fontWeight: "900" },
-  notificationBody: { color: theme.colors.text, fontSize: 11.5, lineHeight: 16 },
-  notificationTime: { color: theme.colors.blue, fontSize: 10.5 },
+  notificationTitle: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
+  notificationBody: { color: theme.colors.text, fontSize: 13, lineHeight: 18 },
+  notificationTime: { color: theme.colors.blue, fontSize: 12 },
 });
