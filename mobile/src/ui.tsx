@@ -345,7 +345,7 @@ export function BottomNav({
   onChange: (key: string) => void;
 }) {
   return (
-    <SafeAreaView style={styles.navSafe}>
+    <View style={styles.navSafe}>
       <View style={styles.nav}>
         {items.map((item) => {
           const selected = item.key === active;
@@ -369,7 +369,7 @@ export function BottomNav({
           );
         })}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
     gap: 18,
   },
   scrollWithBottomNav: {
-    paddingBottom: 92,
+    paddingBottom: 84,
   },
   brandWrap: { gap: 9 },
   brand: {
@@ -710,23 +710,26 @@ const styles = StyleSheet.create({
     borderTopColor: theme.colors.line,
   },
   nav: {
-    minHeight: 72,
+    height: 74,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   navItem: {
     flex: 1,
-    minHeight: 68,
+    height: 62,
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
+    gap: 4,
   },
   navLabel: {
     color: theme.colors.muted,
-    fontSize: 10,
-    fontWeight: "600",
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: "700",
   },
   navLabelActive: {
     color: theme.colors.blue,
