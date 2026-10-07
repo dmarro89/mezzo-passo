@@ -39,7 +39,12 @@ jobs:
           cat /tmp/expo.log
           exit 1
       - name: Capture UI snapshots
-        run: node e2e/ui-snapshots.mjs
+        run: |
+          node e2e/ui-snapshots.mjs || {
+            echo "===== EXPO LOG ====="
+            cat /tmp/expo.log
+            exit 1
+          }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
