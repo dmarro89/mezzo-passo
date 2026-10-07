@@ -179,7 +179,10 @@ function EventDetail({
   onRSVP: (status: "confirmed" | "maybe" | "absent") => void;
 }) {
   return (
-    <Screen key="cullatore-event-detail">
+    <Screen
+      key="cullatore-event-detail"
+      footer={<RSVPButtons event={event} onRSVP={(_, status) => onRSVP(status)} />}
+    >
       <PageHeader title="Dettaglio evento" onBack={onBack} actionIcon="settings-outline" />
 
       <View style={styles.eventImage}>
@@ -223,8 +226,7 @@ function EventDetail({
         />
       </Card>
 
-      <View style={styles.flexSpacer} />
-      <RSVPButtons event={event} onRSVP={(_, status) => onRSVP(status)} />
+
     </Screen>
   );
 }
