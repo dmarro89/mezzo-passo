@@ -614,7 +614,7 @@ const styles = StyleSheet.create({
   },
   bannerImage: { borderRadius: 8 },
   bannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(7,34,87,0.56)",
   },
   bannerEyebrow: {
