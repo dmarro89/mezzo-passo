@@ -622,7 +622,7 @@ const styles = StyleSheet.create({
   },
   eventTypeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   eventType: {
-    width: "48.8%",
+    width: "48%",
     minHeight: 64,
     borderRadius: 12,
     borderWidth: 1,
