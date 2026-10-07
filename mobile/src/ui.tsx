@@ -381,6 +381,20 @@ export function Avatar({
   );
 }
 
+export function ParanzaLogo({ size = 48 }: { size?: number }) {
+  return (
+    <ImageBackground
+      source={BANNER_IMAGE}
+      resizeMode="cover"
+      imageStyle={{ borderRadius: size / 2 }}
+      style={[
+        styles.paranzaLogo,
+        { width: size, height: size, borderRadius: size / 2 },
+      ]}
+    />
+  );
+}
+
 export function HeaderButton({
   icon,
   onPress,
@@ -458,7 +472,6 @@ const styles = StyleSheet.create({
     color: theme.colors.blue,
     fontSize: 11,
     fontWeight: "700",
-    textDecorationLine: "underline",
   },
   card: {
     backgroundColor: theme.colors.surface,
@@ -676,6 +689,12 @@ const styles = StyleSheet.create({
     color: theme.colors.blueDark,
     fontSize: 12,
     fontWeight: "900",
+  },
+  paranzaLogo: {
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    backgroundColor: theme.colors.blueSoft,
   },
   headerButton: {
     width: 30,
