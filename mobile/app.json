@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Mezzo Passo",
+    "slug": "mezzo-passo",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F7F9FC"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "it.mezzopasso.app"
+    },
+    "android": {
+      "package": "it.mezzopasso.app"
+    }
+  }
+}
