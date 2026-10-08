@@ -14,6 +14,14 @@
     },
     "android": {
       "package": "it.mezzopasso.app"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Mezzo Passo usa le tue foto per impostare l'immagine del profilo."
+        }
+      ]
+    ]
   }
 }
