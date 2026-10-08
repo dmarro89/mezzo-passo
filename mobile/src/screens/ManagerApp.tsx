@@ -286,6 +286,7 @@ function Home({
 function ParanzaHero({ paranza }: { paranza?: Paranza }) {
   const primary = paranza?.primaryColor || "#FFFFFF";
   const secondary = paranza?.secondaryColor || theme.colors.blue;
+  const textColor = contrastText(primary);
 
   return (
     <View style={[styles.paranzaHero, { backgroundColor: primary }]}>
@@ -302,9 +303,11 @@ function ParanzaHero({ paranza }: { paranza?: Paranza }) {
         )}
       </View>
       <View style={styles.paranzaHeroCopy}>
-        <Text style={styles.paranzaHeroEyebrow}>LA TUA PARANZA</Text>
+        <Text style={[styles.paranzaHeroEyebrow, { color: textColor }]}>
+          LA TUA PARANZA
+        </Text>
         <Text
-          style={styles.paranzaHeroName}
+          style={[styles.paranzaHeroName, { color: textColor }]}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.65}
@@ -769,6 +772,19 @@ function EventRow({ event }: { event: EventItem }) {
   );
 }
 
+function contrastText(hex: string) {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) {
+    return theme.colors.blueDark;
+  }
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6
+    ? theme.colors.blueDark
+    : "#FFFFFF";
+}
+
 function formatShortDate(value: string) {
   return new Date(value).toLocaleDateString("it-IT", {
     day: "2-digit",
@@ -803,6 +819,65 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+  },
+  paranzaHero: {
+    minHeight: 116,
+    borderRadius: 16,
+    overflow: "hidden",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 18,
+    gap: 14,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+  },
+  paranzaHeroBand: {
+    position: "absolute",
+    right: -30,
+    top: -28,
+    width: 150,
+    height: 180,
+    transform: [{ rotate: "16deg" }],
+  },
+  paranzaLogoWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    overflow: "hidden",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.75)",
+    zIndex: 1,
+  },
+  paranzaLogoImage: {
+    width: "100%",
+    height: "100%",
+  },
+  paranzaHeroCopy: {
+    flex: 1,
+    minWidth: 0,
+    gap: 4,
+    zIndex: 1,
+  },
+  paranzaHeroEyebrow: {
+    fontSize: 10,
+    lineHeight: 13,
+    fontWeight: "900",
+    letterSpacing: 1.8,
+    opacity: 0.78,
+  },
+  paranzaHeroName: {
+    fontSize: 24,
+    lineHeight: 29,
+    fontWeight: "900",
+  },
+  errorText: {
+    color: theme.colors.danger,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "700",
   },
   hello: {
     color: theme.colors.blueDark,
