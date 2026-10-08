@@ -125,6 +125,13 @@ CREATE TABLE IF NOT EXISTS messages (
 	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS message_reads (
+	message_id BIGINT NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
+	user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	read_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (message_id, user_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_events_paranza_starts ON events(paranza_id, starts_at);
 CREATE INDEX IF NOT EXISTS idx_messages_paranza_created ON messages(paranza_id, created_at DESC);
 `
@@ -437,7 +444,7 @@ func (s *Store) Events(ctx context.Context, userID int64) ([]model.Event, error)
 	rows, err := s.db.QueryContext(ctx, `
 SELECT e.id,e.type,e.title,e.description,e.location,e.starts_at,e.ends_at,e.required,e.attire,
        COALESCE(r.status,''),
-       (SELECT COUNT(*) FROM rsvps rr WHERE rr.event_id=e.id)
+       (SELECT COUNT(*) FROM rsvps rr WHERE rr.event_id=e.id AND rr.status='confirmed')
 FROM events e
 LEFT JOIN rsvps r ON r.event_id=e.id AND r.user_id=$1
 WHERE e.paranza_id=$2
@@ -498,7 +505,7 @@ func (s *Store) Participants(ctx context.Context, userID, eventID int64) ([]mode
 		return nil, ErrNotFound
 	}
 	rows, err := s.db.QueryContext(ctx, `
-SELECT u.id, u.first_name || ' ' || u.last_name, u.position,
+SELECT u.id, u.first_name || ' ' || u.last_name, u.photo_url, u.position,
        COALESCE(r.status,''), m.active
 FROM memberships m
 JOIN users u ON u.id=m.user_id
@@ -513,7 +520,7 @@ ORDER BY u.last_name,u.first_name
 	var out []model.Participant
 	for rows.Next() {
 		var v model.Participant
-		if err := rows.Scan(&v.UserID, &v.Name, &v.Position, &v.Status, &v.IsActive); err != nil {
+		if err := rows.Scan(&v.UserID, &v.Name, &v.PhotoURL, &v.Position, &v.Status, &v.IsActive); err != nil {
 			return nil, err
 		}
 		out = append(out, v)
@@ -557,12 +564,21 @@ func (s *Store) Messages(ctx context.Context, userID int64) ([]model.Message, er
 		return nil, err
 	}
 	rows, err := s.db.QueryContext(ctx, `
-SELECT m.id,m.title,m.body,u.first_name || ' ' || u.last_name,m.created_at
-FROM messages m JOIN users u ON u.id=m.sender_user_id
-WHERE m.paranza_id=$1
+SELECT
+	m.id,
+	m.title,
+	m.body,
+	u.first_name || ' ' || u.last_name,
+	m.created_at,
+	(SELECT COUNT(*) FROM memberships mm WHERE mm.paranza_id=m.paranza_id),
+	(SELECT COUNT(*) FROM message_reads mr WHERE mr.message_id=m.id),
+	EXISTS(SELECT 1 FROM message_reads mr WHERE mr.message_id=m.id AND mr.user_id=$1)
+FROM messages m
+JOIN users u ON u.id=m.sender_user_id
+WHERE m.paranza_id=$2
 ORDER BY m.created_at DESC
 LIMIT 100
-`, p.ID)
+`, userID, p.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -570,7 +586,16 @@ LIMIT 100
 	var out []model.Message
 	for rows.Next() {
 		var m model.Message
-		if err := rows.Scan(&m.ID, &m.Title, &m.Body, &m.SenderName, &m.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&m.ID,
+			&m.Title,
+			&m.Body,
+			&m.SenderName,
+			&m.CreatedAt,
+			&m.RecipientCount,
+			&m.ReadCount,
+			&m.IsRead,
+		); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
@@ -599,7 +624,12 @@ RETURNING id,title,body,created_at
 		return model.Message{}, err
 	}
 	u, _ := s.GetUser(ctx, userID)
-	m.SenderName = u.FirstName + " " + u.LastName
+	m.SenderName = strings.TrimSpace(u.FirstName + " " + u.LastName)
+	if err := s.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM memberships WHERE paranza_id=$1`, p.ID,
+	).Scan(&m.RecipientCount); err != nil {
+		return model.Message{}, err
+	}
 	return m, nil
 }
 
@@ -609,7 +639,7 @@ func (s *Store) Members(ctx context.Context, userID int64) ([]model.Member, erro
 		return nil, err
 	}
 	rows, err := s.db.QueryContext(ctx, `
-SELECT u.id,u.first_name || ' ' || u.last_name,u.position,m.active
+SELECT u.id,u.first_name || ' ' || u.last_name,u.photo_url,u.position,m.active
 FROM memberships m JOIN users u ON u.id=m.user_id
 WHERE m.paranza_id=$1
 ORDER BY m.active DESC,u.last_name,u.first_name
@@ -621,7 +651,7 @@ ORDER BY m.active DESC,u.last_name,u.first_name
 	var out []model.Member
 	for rows.Next() {
 		var m model.Member
-		if err := rows.Scan(&m.UserID, &m.Name, &m.Position, &m.IsActive); err != nil {
+		if err := rows.Scan(&m.UserID, &m.Name, &m.PhotoURL, &m.Position, &m.IsActive); err != nil {
 			return nil, err
 		}
 		out = append(out, m)
