@@ -22,6 +22,7 @@ export const managerMe: Me = {
   paranza: {
     id: 1,
     name: "Orgoglio Nolano",
+    description: "Tradizione, Passione, Nola. Uniti sotto gli stessi colori.",
     primaryColor: "#FFFFFF",
     secondaryColor: "#0A4DBA",
     inviteCode: "MEZZOPASSO",
