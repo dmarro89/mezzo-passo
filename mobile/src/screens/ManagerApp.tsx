@@ -579,18 +579,45 @@ function Messages({
   setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
 }) {
   const [composing, setComposing] = useState(false);
-  const [subject, setSubject] = useState("Prova di sabato");
-  const [body, setBody] = useState(
-    "Ragazzi,\nci vediamo sabato alle 20:00 in Zona Duomo per la prova della paranza.\n\nÈ importante la presenza di tutti.\nForza Orgoglio Nolano!",
-  );
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [messageError, setMessageError] = useState("");
 
   async function sendMessage() {
-    if (!token) {
+    if (!token || sending) {
       return;
     }
-    const created = await api.createMessage(token, subject, body);
-    setMessages((current) => [created, ...current]);
-    setComposing(false);
+    if (!subject.trim() || !body.trim()) {
+      setMessageError("Inserisci oggetto e messaggio.");
+      return;
+    }
+    if (body.trim().length > 500) {
+      setMessageError("Il messaggio non può superare 500 caratteri.");
+      return;
+    }
+
+    setSending(true);
+    setMessageError("");
+    try {
+      const created = await api.createMessage(
+        token,
+        subject.trim(),
+        body.trim(),
+      );
+      setMessages((current) => [created, ...current]);
+      setSubject("");
+      setBody("");
+      setComposing(false);
+    } catch (cause) {
+      setMessageError(
+        cause instanceof Error
+          ? cause.message
+          : "Non è stato possibile inviare il messaggio.",
+      );
+    } finally {
+      setSending(false);
+    }
   }
 
   if (composing) {
@@ -598,18 +625,34 @@ function Messages({
       <Screen
         key="manager-compose"
         withBottomNav
-        footer={<Button large title="Invia messaggio" onPress={sendMessage} />}
+        footer={
+          <Button
+            large
+            disabled={sending || !subject.trim() || !body.trim()}
+            title={sending ? "Invio..." : "Invia messaggio"}
+            onPress={sendMessage}
+          />
+        }
       >
         <PageHeader title="Nuovo messaggio" onBack={() => setComposing(false)} />
         <Text style={styles.blockLabel}>Destinatari</Text>
         <View style={styles.recipientRow}>
-          <Pill label={"Tutti i cullatori (" + memberCount + " membri)"} active />
-          <Pill label="Seleziona cullatori" />
+          <Pill
+            label={"Tutti i cullatori (" + memberCount + " membri)"}
+            active
+          />
         </View>
         <Field label="Oggetto" value={subject} onChangeText={setSubject} />
-        <Field label="Messaggio" value={body} onChangeText={setBody} multiline />
+        <Field
+          label="Messaggio"
+          value={body}
+          onChangeText={setBody}
+          multiline
+        />
         <Text style={styles.counter}>{body.length}/500</Text>
-
+        {messageError ? (
+          <Text style={styles.errorText}>{messageError}</Text>
+        ) : null}
       </Screen>
     );
   }
@@ -621,16 +664,35 @@ function Messages({
         <HeaderButton icon="add" onPress={() => setComposing(true)} />
       </View>
       <Button title="Nuovo messaggio" onPress={() => setComposing(true)} />
-      {messages.map((message) => (
-        <Card key={message.id}>
-          <View style={styles.headerRow}>
-            <Text style={styles.cardStrong}>{message.title}</Text>
-            <Text style={styles.dateText}>{formatShortDate(message.createdAt)}</Text>
-          </View>
-          <Text style={styles.subtle}>{message.senderName}</Text>
-          <Text style={styles.body}>{message.body}</Text>
+
+      {messages.length ? (
+        messages.map((message) => (
+          <Card key={message.id}>
+            <View style={styles.headerRow}>
+              <Text style={styles.cardStrong}>{message.title}</Text>
+              <Text style={styles.dateText}>
+                {formatShortDate(message.createdAt)}
+              </Text>
+            </View>
+            <Text style={styles.subtle}>{message.senderName}</Text>
+            <Text style={styles.body}>{message.body}</Text>
+            <View style={styles.messageMetaRow}>
+              <Ionicons
+                name="checkmark-done-outline"
+                size={17}
+                color={theme.colors.blue}
+              />
+              <Text style={styles.messageReadText}>
+                {message.readCount}/{message.recipientCount} letti
+              </Text>
+            </View>
+          </Card>
+        ))
+      ) : (
+        <Card>
+          <Text style={styles.subtle}>Nessun messaggio inviato.</Text>
         </Card>
-      ))}
+      )}
     </Screen>
   );
 }
