@@ -169,8 +169,33 @@ func (s *Server) createEvent(w http.ResponseWriter, r *http.Request) {
 		Required    bool   `json:"required"`
 		Attire      string `json:"attire"`
 	}
-	if err := decodeJSON(r, &in); err != nil || in.Title == "" || in.Type == "" {
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	in.Type = strings.TrimSpace(in.Type)
+	in.Title = strings.TrimSpace(in.Title)
+	in.Description = strings.TrimSpace(in.Description)
+	in.Location = strings.TrimSpace(in.Location)
+	in.Attire = strings.TrimSpace(in.Attire)
+	switch {
+	case in.Type == "" || in.Title == "":
 		writeError(w, http.StatusBadRequest, "type and title are required")
+		return
+	case in.Location == "":
+		writeError(w, http.StatusBadRequest, "location is required")
+		return
+	case len(in.Title) > 120:
+		writeError(w, http.StatusBadRequest, "title is too long")
+		return
+	case len(in.Description) > 1000:
+		writeError(w, http.StatusBadRequest, "description is too long")
+		return
+	case len(in.Location) > 240:
+		writeError(w, http.StatusBadRequest, "location is too long")
+		return
+	case len(in.Attire) > 240:
+		writeError(w, http.StatusBadRequest, "attire is too long")
 		return
 	}
 	start, err := time.Parse(time.RFC3339, in.StartsAt)
@@ -244,8 +269,21 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 		Title string `json:"title"`
 		Body  string `json:"body"`
 	}
-	if err := decodeJSON(r, &in); err != nil || strings.TrimSpace(in.Title) == "" || strings.TrimSpace(in.Body) == "" {
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	in.Title = strings.TrimSpace(in.Title)
+	in.Body = strings.TrimSpace(in.Body)
+	switch {
+	case in.Title == "" || in.Body == "":
 		writeError(w, http.StatusBadRequest, "title and body are required")
+		return
+	case len(in.Title) > 120:
+		writeError(w, http.StatusBadRequest, "title is too long")
+		return
+	case len(in.Body) > 500:
+		writeError(w, http.StatusBadRequest, "message is too long")
 		return
 	}
 	v, err := s.store.CreateMessage(r.Context(), userID(r.Context()), in.Title, in.Body)
