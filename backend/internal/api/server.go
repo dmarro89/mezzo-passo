@@ -29,6 +29,7 @@ func New(st *store.Store, log *slog.Logger) http.Handler {
 	mux.HandleFunc("POST /api/v1/demo/login", s.demoLogin)
 
 	mux.Handle("GET /api/v1/me", s.auth(http.HandlerFunc(s.me)))
+	mux.Handle("PUT /api/v1/onboarding/paranza", s.auth(http.HandlerFunc(s.upsertParanzaOnboarding)))
 	mux.Handle("GET /api/v1/events", s.auth(http.HandlerFunc(s.events)))
 	mux.Handle("POST /api/v1/events", s.auth(http.HandlerFunc(s.createEvent)))
 	mux.Handle("GET /api/v1/events/{id}/participants", s.auth(http.HandlerFunc(s.participants)))
@@ -76,6 +77,62 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, v)
+}
+
+
+func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Name           string `json:"name"`
+		Description    string `json:"description"`
+		ManagerName    string `json:"managerName"`
+		PrimaryColor   string `json:"primaryColor"`
+		SecondaryColor string `json:"secondaryColor"`
+	}
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+
+	in.Name = strings.TrimSpace(in.Name)
+	in.Description = strings.TrimSpace(in.Description)
+	in.ManagerName = strings.TrimSpace(in.ManagerName)
+
+	switch {
+	case in.Name == "":
+		writeError(w, http.StatusBadRequest, "paranza name is required")
+		return
+	case len(in.Name) > 80:
+		writeError(w, http.StatusBadRequest, "paranza name is too long")
+		return
+	case in.ManagerName == "":
+		writeError(w, http.StatusBadRequest, "manager name is required")
+		return
+	case len(in.ManagerName) > 120:
+		writeError(w, http.StatusBadRequest, "manager name is too long")
+		return
+	case len(in.Description) > 500:
+		writeError(w, http.StatusBadRequest, "description is too long")
+		return
+	case !validHexColor(in.PrimaryColor) || !validHexColor(in.SecondaryColor):
+		writeError(w, http.StatusBadRequest, "colors must use #RRGGBB format")
+		return
+	case strings.EqualFold(in.PrimaryColor, in.SecondaryColor):
+		writeError(w, http.StatusBadRequest, "choose two different colors")
+		return
+	}
+
+	p, err := s.store.UpsertParanzaOnboarding(r.Context(), userID(r.Context()), store.ParanzaOnboardingParams{
+		Name:           in.Name,
+		Description:    in.Description,
+		ManagerName:    in.ManagerName,
+		PrimaryColor:   strings.ToUpper(in.PrimaryColor),
+		SecondaryColor: strings.ToUpper(in.SecondaryColor),
+	})
+	if err != nil {
+		s.handleStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, p)
 }
 
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
@@ -235,6 +292,14 @@ func (s *Server) auth(next http.Handler) http.Handler {
 func userID(ctx context.Context) int64 {
 	id, _ := ctx.Value(userIDKey).(int64)
 	return id
+}
+
+func validHexColor(value string) bool {
+	if len(value) != 7 || value[0] != '#' {
+		return false
+	}
+	_, err := strconv.ParseUint(value[1:], 16, 24)
+	return err == nil
 }
 
 func pathID(w http.ResponseWriter, r *http.Request) (int64, bool) {
