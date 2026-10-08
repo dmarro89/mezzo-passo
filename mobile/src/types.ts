@@ -55,11 +55,15 @@ export type MessageItem = {
   body: string;
   senderName: string;
   createdAt: string;
+  recipientCount: number;
+  readCount: number;
+  isRead: boolean;
 };
 
 export type Member = {
   userId: number;
   name: string;
+  photoUrl?: string;
   position: string;
   isActive: boolean;
 };
@@ -67,16 +71,28 @@ export type Member = {
 export type Participant = {
   userId: number;
   name: string;
+  photoUrl?: string;
   position: string;
   status: "" | "confirmed" | "maybe" | "absent";
   isActive: boolean;
+};
+
+export type AttendancePoint = {
+  eventId: number;
+  title: string;
+  startsAt: string;
+  confirmedCount: number;
+  memberCount: number;
+  rate: number;
 };
 
 export type Stats = {
   memberCount: number;
   activeMemberCount: number;
   eventCount: number;
+  upcomingEventCount: number;
   attendanceRate: number;
+  attendanceHistory: AttendancePoint[];
 };
 
 export type NotificationItem = {
