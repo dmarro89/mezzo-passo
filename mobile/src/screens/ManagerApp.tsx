@@ -572,9 +572,9 @@ function ParticipantsView({
   );
 }
 
-function Members() {
+function Members({ members }: { members: Member[] }) {
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const filtered = demoMembers.filter((member) =>
+  const filtered = members.filter((member) =>
     filter === "all"
       ? true
       : filter === "active"
@@ -590,9 +590,21 @@ function Members() {
         <Text style={styles.searchPlaceholder}>Cerca un cullatore...</Text>
       </View>
       <View style={styles.recipientRow}>
-        <Pill label="Tutti 32" active={filter === "all"} onPress={() => setFilter("all")} />
-        <Pill label="Attivi 28" active={filter === "active"} onPress={() => setFilter("active")} />
-        <Pill label="Non attivi 4" active={filter === "inactive"} onPress={() => setFilter("inactive")} />
+        <Pill
+          label={"Tutti " + members.length}
+          active={filter === "all"}
+          onPress={() => setFilter("all")}
+        />
+        <Pill
+          label={"Attivi " + members.filter((member) => member.isActive).length}
+          active={filter === "active"}
+          onPress={() => setFilter("active")}
+        />
+        <Pill
+          label={"Non attivi " + members.filter((member) => !member.isActive).length}
+          active={filter === "inactive"}
+          onPress={() => setFilter("inactive")}
+        />
       </View>
 
       {filtered.map((member) => (
@@ -612,9 +624,11 @@ function Members() {
 
 function Stats({
   events,
+  stats,
   onLogout,
 }: {
   events: EventItem[];
+  stats: StatsData;
   onLogout: () => void;
 }) {
   return (
@@ -623,10 +637,10 @@ function Stats({
       <Card>
         <Text style={styles.statsTitle}>Tasso di presenza</Text>
         <View style={styles.bigRing}>
-          <Text style={styles.bigRingValue}>75%</Text>
+          <Text style={styles.bigRingValue}>{Math.round(stats.attendanceRate)}%</Text>
         </View>
         <Text style={styles.statsCaption}>
-          24 presenti su 32 cullatori{"\n"}ultimo evento
+          Presenza media calcolata sui dati RSVP della paranza
         </Text>
       </Card>
 
