@@ -337,6 +337,7 @@ type ParanzaOnboardingParams struct {
 	ManagerName    string
 	PrimaryColor   string
 	SecondaryColor string
+	PhotoURL       string
 }
 
 func (s *Store) UpsertParanzaOnboarding(ctx context.Context, userID int64, in ParanzaOnboardingParams) (model.Paranza, error) {
@@ -367,9 +368,9 @@ func (s *Store) UpsertParanzaOnboarding(ctx context.Context, userID int64, in Pa
 
 	if _, err := tx.ExecContext(ctx, `
 UPDATE users
-SET first_name=$1, last_name=$2
-WHERE id=$3
-`, firstName, lastName, userID); err != nil {
+SET first_name=$1, last_name=$2, photo_url=$3
+WHERE id=$4
+`, firstName, lastName, in.PhotoURL, userID); err != nil {
 		return model.Paranza{}, fmt.Errorf("update manager profile: %w", err)
 	}
 
