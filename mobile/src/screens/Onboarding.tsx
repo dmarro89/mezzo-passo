@@ -9,12 +9,12 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import { Paranza, Role } from "../types";
 import { demoLogin, api } from "../api";
 import { WELCOME_IMAGE } from "../demo";
 import {
   Avatar,
-  Banner,
   Button,
   Card,
   Field,
@@ -30,27 +30,55 @@ type Step = "welcome" | "role" | "profile" | "customize" | "success";
 
 const PARANZA_COLORS = [
   "#FFFFFF",
+  "#000000",
+  "#E53935",
+  "#FB8C00",
+  "#FDD835",
+  "#43A047",
+  "#00897B",
+  "#00ACC1",
+  "#1E88E5",
   "#0A4DBA",
+  "#3949AB",
+  "#5E35B1",
+  "#8E24AA",
+  "#D81B60",
+  "#F06292",
+  "#6D4C41",
+  "#795548",
+  "#9E9E9E",
+  "#607D8B",
+  "#263238",
   "#B8C0CF",
-  "#8F9DB2",
-  "#617693",
   "#5B92F4",
   "#4B859B",
-  "#7B899C",
-  "#B0BBCB",
   "#D6D9DE",
 ];
 
 const COLOR_NAMES: Record<string, string> = {
   "#FFFFFF": "Bianco",
+  "#000000": "Nero",
+  "#E53935": "Rosso",
+  "#FB8C00": "Arancio",
+  "#FDD835": "Giallo",
+  "#43A047": "Verde",
+  "#00897B": "Verde acqua",
+  "#00ACC1": "Ciano",
+  "#1E88E5": "Azzurro",
   "#0A4DBA": "Blu",
+  "#3949AB": "Indaco",
+  "#5E35B1": "Viola",
+  "#8E24AA": "Porpora",
+  "#D81B60": "Fucsia",
+  "#F06292": "Rosa",
+  "#6D4C41": "Marrone",
+  "#795548": "Terra",
+  "#9E9E9E": "Grigio",
+  "#607D8B": "Grigio blu",
+  "#263238": "Antracite",
   "#B8C0CF": "Grigio chiaro",
-  "#8F9DB2": "Grigio",
-  "#617693": "Blu ardesia",
-  "#5B92F4": "Azzurro",
+  "#5B92F4": "Blu cielo",
   "#4B859B": "Petrolio",
-  "#7B899C": "Grigio blu",
-  "#B0BBCB": "Perla",
   "#D6D9DE": "Ghiaccio",
 };
 
@@ -68,26 +96,68 @@ export function Onboarding({
   const [description, setDescription] = useState(
     "Tradizione, Passione, Nola.\nUniti sotto gli stessi colori.",
   );
-  const [selectedColors, setSelectedColors] = useState<string[]>([
-    "#FFFFFF",
-    "#0A4DBA",
-  ]);
+  const [primaryColor, setPrimaryColor] = useState("#FFFFFF");
+  const [secondaryColor, setSecondaryColor] = useState("#0A4DBA");
+  const [activeColorSlot, setActiveColorSlot] = useState<1 | 2>(1);
+  const [managerPhotoUri, setManagerPhotoUri] = useState<string>();
+  const [managerPhotoDataUrl, setManagerPhotoDataUrl] = useState<string>();
   const [sessionToken, setSessionToken] = useState<string>();
   const [savedParanza, setSavedParanza] = useState<Paranza>();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  function toggleColor(color: string) {
+  function setPaletteColor(color: string) {
     setError("");
-    setSelectedColors((current) => {
-      if (current.includes(color)) {
-        return current.filter((item) => item !== color);
-      }
-      if (current.length >= 2) {
-        return current;
-      }
-      return [...current, color];
+    if (activeColorSlot === 1) {
+      setPrimaryColor(color);
+      setActiveColorSlot(2);
+    } else {
+      setSecondaryColor(color);
+      setActiveColorSlot(1);
+    }
+  }
+
+  function updateCustomColor(slot: 1 | 2, value: string) {
+    const normalized = value.startsWith("#") ? value.toUpperCase() : "#" + value.toUpperCase();
+    if (slot === 1) {
+      setPrimaryColor(normalized);
+    } else {
+      setSecondaryColor(normalized);
+    }
+    setActiveColorSlot(slot);
+    setError("");
+  }
+
+  async function pickManagerPhoto() {
+    setError("");
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setError("Consenti l’accesso alle foto per scegliere un’immagine.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.45,
+      base64: true,
     });
+
+    if (result.canceled) {
+      return;
+    }
+
+    const asset = result.assets[0];
+    setManagerPhotoUri(asset.uri);
+    if (asset.base64) {
+      const mimeType = asset.mimeType ?? "image/jpeg";
+      setManagerPhotoDataUrl("data:" + mimeType + ";base64," + asset.base64);
+    }
+  }
+
+  function isValidHex(value: string) {
+    return /^#[0-9A-F]{6}$/i.test(value);
   }
 
   function goToCustomize() {
@@ -110,9 +180,12 @@ export function Onboarding({
       setStep("success");
       return;
     }
-    const [primaryColor, secondaryColor] = selectedColors;
-    if (!primaryColor || !secondaryColor || selectedColors.length !== 2) {
-      setError("Seleziona esattamente due colori.");
+    if (!isValidHex(primaryColor) || !isValidHex(secondaryColor)) {
+      setError("Inserisci due colori validi in formato HEX, ad esempio #0A4DBA.");
+      return;
+    }
+    if (primaryColor.toUpperCase() === secondaryColor.toUpperCase()) {
+      setError("Scegli due colori differenti.");
       return;
     }
 
@@ -130,8 +203,9 @@ export function Onboarding({
         name: paranzaName.trim(),
         description: description.trim(),
         managerName: managerName.trim(),
-        primaryColor,
-        secondaryColor,
+        primaryColor: primaryColor.toUpperCase(),
+        secondaryColor: secondaryColor.toUpperCase(),
+        photoDataUrl: managerPhotoDataUrl,
       });
       setSavedParanza(paranza);
       setStep("success");
