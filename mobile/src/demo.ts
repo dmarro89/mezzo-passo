@@ -91,6 +91,9 @@ export const demoMessages: MessageItem[] = [
     body: "Ragazzi, ci vediamo sabato alle 20:00 in Zona Duomo per la prova della paranza.",
     senderName: "Luca Iorio",
     createdAt: at(0, 10, 24),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
   {
     id: 2,
@@ -98,6 +101,9 @@ export const demoMessages: MessageItem[] = [
     body: "Nuovo orario per la prova di sabato.",
     senderName: "Orgoglio Nolano",
     createdAt: at(-1, 19, 20),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
   {
     id: 3,
@@ -105,6 +111,9 @@ export const demoMessages: MessageItem[] = [
     body: "Portate la maglia della paranza.",
     senderName: "Raffaele Marra",
     createdAt: at(-1, 18, 10),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
   {
     id: 4,
@@ -112,6 +121,9 @@ export const demoMessages: MessageItem[] = [
     body: "Ritrovo alle 19:30, puntuali!",
     senderName: "Giovanni Nappi",
     createdAt: at(-2, 17, 45),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
   {
     id: 5,
@@ -119,6 +131,9 @@ export const demoMessages: MessageItem[] = [
     body: "Grande prova ieri! 💪",
     senderName: "Ciro Manfredi",
     createdAt: at(-2, 12, 15),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
   {
     id: 6,
@@ -126,6 +141,9 @@ export const demoMessages: MessageItem[] = [
     body: "Ci vediamo domani per definire gli ultimi dettagli.",
     senderName: "Luigi Romano",
     createdAt: at(-3, 19, 5),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
   {
     id: 7,
@@ -133,6 +151,9 @@ export const demoMessages: MessageItem[] = [
     body: "Scarpe comode, fa caldo.",
     senderName: "Salvatore Conte",
     createdAt: at(-4, 16, 40),
+    recipientCount: 32,
+    readCount: 0,
+    isRead: false,
   },
 ];
 
@@ -160,7 +181,9 @@ export const demoStats: Stats = {
   memberCount: 32,
   activeMemberCount: 28,
   eventCount: 24,
+  upcomingEventCount: 3,
   attendanceRate: 75,
+  attendanceHistory: [],
 };
 
 export const demoNotifications: NotificationItem[] = [
