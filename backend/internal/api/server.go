@@ -87,8 +87,9 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 		ManagerName    string `json:"managerName"`
 		PrimaryColor   string `json:"primaryColor"`
 		SecondaryColor string `json:"secondaryColor"`
+		PhotoDataURL   string `json:"photoDataUrl"`
 	}
-	if err := decodeJSON(r, &in); err != nil {
+	if err := decodeJSONMax(r, &in, 4<<20); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON body")
 		return
 	}
@@ -119,6 +120,12 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 	case strings.EqualFold(in.PrimaryColor, in.SecondaryColor):
 		writeError(w, http.StatusBadRequest, "choose two different colors")
 		return
+	case len(in.PhotoDataURL) > 3<<20:
+		writeError(w, http.StatusBadRequest, "profile image is too large")
+		return
+	case in.PhotoDataURL != "" && !strings.HasPrefix(in.PhotoDataURL, "data:image/"):
+		writeError(w, http.StatusBadRequest, "unsupported profile image format")
+		return
 	}
 
 	p, err := s.store.UpsertParanzaOnboarding(r.Context(), userID(r.Context()), store.ParanzaOnboardingParams{
@@ -127,6 +134,7 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 		ManagerName:    in.ManagerName,
 		PrimaryColor:   strings.ToUpper(in.PrimaryColor),
 		SecondaryColor: strings.ToUpper(in.SecondaryColor),
+		PhotoURL:       in.PhotoDataURL,
 	})
 	if err != nil {
 		s.handleStoreError(w, err)
@@ -328,8 +336,12 @@ func (s *Server) internal(w http.ResponseWriter, err error) {
 }
 
 func decodeJSON(r *http.Request, out any) error {
+	return decodeJSONMax(r, out, 1<<20)
+}
+
+func decodeJSONMax(r *http.Request, out any, maxBytes int64) error {
 	defer r.Body.Close()
-	dec := json.NewDecoder(http.MaxBytesReader(nil, r.Body, 1<<20))
+	dec := json.NewDecoder(http.MaxBytesReader(nil, r.Body, maxBytes))
 	dec.DisallowUnknownFields()
 	return dec.Decode(out)
 }
