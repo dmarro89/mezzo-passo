@@ -317,10 +317,12 @@ function ParanzaHero({ paranza }: { paranza?: Paranza }) {
 }
 
 function Events({
+  token,
   events,
   setEvents,
   onOpenParticipants,
 }: {
+  token?: string;
   events: EventItem[];
   setEvents: React.Dispatch<React.SetStateAction<EventItem[]>>;
   onOpenParticipants: (event: EventItem) => void;
@@ -332,28 +334,27 @@ function Events({
   const [description, setDescription] = useState("Prova generale in vista della festa.");
   const [required, setRequired] = useState(true);
 
-  function createEvent() {
+  async function createEvent() {
+    if (!token) {
+      return;
+    }
     const start = new Date();
     start.setDate(start.getDate() + 12);
     start.setHours(20, 0, 0, 0);
     const end = new Date(start);
     end.setHours(22, 0, 0, 0);
-    setEvents((current) => [
-      {
-        id: Date.now(),
-        type,
-        title,
-        description,
-        location,
-        startsAt: start.toISOString(),
-        endsAt: end.toISOString(),
-        required,
-        attire: "Maglia della paranza",
-        participantCount: 0,
-        rsvp: "",
-      },
-      ...current,
-    ]);
+
+    const created = await api.createEvent(token, {
+      type,
+      title,
+      description,
+      location,
+      startsAt: start.toISOString(),
+      endsAt: end.toISOString(),
+      required,
+      attire: "Maglia della paranza",
+    });
+    setEvents((current) => [created, ...current]);
     setCreating(false);
   }
 
