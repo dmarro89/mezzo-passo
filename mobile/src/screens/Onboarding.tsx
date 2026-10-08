@@ -211,7 +211,7 @@ export function Onboarding({
         managerName: managerName.trim(),
         primaryColor: primaryColor.toUpperCase(),
         secondaryColor: secondaryColor.toUpperCase(),
-        photoDataUrl: managerPhotoDataUrl,
+        logoDataUrl: managerPhotoDataUrl,
       });
       setSavedParanza(paranza);
       setStep("success");
