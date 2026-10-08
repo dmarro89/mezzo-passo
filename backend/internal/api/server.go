@@ -99,7 +99,7 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 	in.Description = strings.TrimSpace(in.Description)
 	in.ManagerName = strings.TrimSpace(in.ManagerName)
 	if in.LogoDataURL == "" {
-		in.LogoDataURL = in.LogoDataURL
+		in.LogoDataURL = in.PhotoDataURL
 	}
 
 	switch {
@@ -125,10 +125,10 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 		writeError(w, http.StatusBadRequest, "choose two different colors")
 		return
 	case len(in.LogoDataURL) > 3<<20:
-		writeError(w, http.StatusBadRequest, "profile image is too large")
+		writeError(w, http.StatusBadRequest, "logo image is too large")
 		return
 	case in.LogoDataURL != "" && !strings.HasPrefix(in.LogoDataURL, "data:image/"):
-		writeError(w, http.StatusBadRequest, "unsupported profile image format")
+		writeError(w, http.StatusBadRequest, "unsupported logo image format")
 		return
 	}
 
