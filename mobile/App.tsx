@@ -25,6 +25,7 @@ export default function App() {
         />
       ) : session.role === "capoparanza" ? (
         <ManagerApp
+          token={session.token}
           paranza={session.paranza}
           onLogout={() => setSession(undefined)}
         />
