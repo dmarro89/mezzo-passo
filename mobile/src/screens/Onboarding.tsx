@@ -149,7 +149,12 @@ export function Onboarding({
       return;
     }
 
-    const asset = result.assets[0];
+    const asset = result.assets?.[0];
+    if (!asset) {
+      setError("Non è stato possibile leggere l’immagine selezionata.");
+      return;
+    }
+
     setManagerPhotoUri(asset.uri);
     if (asset.base64) {
       const mimeType = asset.mimeType ?? "image/jpeg";
