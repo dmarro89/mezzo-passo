@@ -87,6 +87,7 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 		ManagerName    string `json:"managerName"`
 		PrimaryColor   string `json:"primaryColor"`
 		SecondaryColor string `json:"secondaryColor"`
+		LogoDataURL    string `json:"logoDataUrl"`
 		PhotoDataURL   string `json:"photoDataUrl"`
 	}
 	if err := decodeJSONMax(r, &in, 4<<20); err != nil {
@@ -97,6 +98,9 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 	in.Name = strings.TrimSpace(in.Name)
 	in.Description = strings.TrimSpace(in.Description)
 	in.ManagerName = strings.TrimSpace(in.ManagerName)
+	if in.LogoDataURL == "" {
+		in.LogoDataURL = in.LogoDataURL
+	}
 
 	switch {
 	case in.Name == "":
@@ -120,10 +124,10 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 	case strings.EqualFold(in.PrimaryColor, in.SecondaryColor):
 		writeError(w, http.StatusBadRequest, "choose two different colors")
 		return
-	case len(in.PhotoDataURL) > 3<<20:
+	case len(in.LogoDataURL) > 3<<20:
 		writeError(w, http.StatusBadRequest, "profile image is too large")
 		return
-	case in.PhotoDataURL != "" && !strings.HasPrefix(in.PhotoDataURL, "data:image/"):
+	case in.LogoDataURL != "" && !strings.HasPrefix(in.LogoDataURL, "data:image/"):
 		writeError(w, http.StatusBadRequest, "unsupported profile image format")
 		return
 	}
@@ -134,7 +138,7 @@ func (s *Server) upsertParanzaOnboarding(w http.ResponseWriter, r *http.Request)
 		ManagerName:    in.ManagerName,
 		PrimaryColor:   strings.ToUpper(in.PrimaryColor),
 		SecondaryColor: strings.ToUpper(in.SecondaryColor),
-		PhotoURL:       in.PhotoDataURL,
+		LogoURL:        in.LogoDataURL,
 	})
 	if err != nil {
 		s.handleStoreError(w, err)
