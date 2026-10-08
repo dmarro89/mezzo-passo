@@ -42,6 +42,9 @@ jobs:
         with:
           go-version-file: backend/go.mod
           cache: false
+      - name: Resolve backend modules
+        working-directory: backend
+        run: go mod tidy
       - name: Start API
         working-directory: backend
         run: |
