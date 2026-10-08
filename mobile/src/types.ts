@@ -13,10 +13,19 @@ export type User = {
 export type Paranza = {
   id: number;
   name: string;
+  description: string;
   primaryColor: string;
   secondaryColor: string;
   inviteCode?: string;
   managerName: string;
+};
+
+export type ParanzaOnboardingInput = {
+  name: string;
+  description: string;
+  managerName: string;
+  primaryColor: string;
+  secondaryColor: string;
 };
 
 export type Me = {
