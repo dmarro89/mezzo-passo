@@ -716,8 +716,12 @@ const styles = StyleSheet.create({
   },
   metricRingValue: {
     color: theme.colors.blueDark,
-    fontSize: 17,
+    fontSize: 16,
+    lineHeight: 18,
     fontWeight: "900",
+    textAlign: "center",
+    includeFontPadding: false,
+    transform: [{ translateY: -1 }],
   },
   banner: {
     height: 82,
