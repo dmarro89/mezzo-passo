@@ -1,19 +1,19 @@
-import React, { useMemo, useState } from "react";
-import { Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import { Image, Pressable, StyleSheet, Switch, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { api, demoLogin } from "../api";
 import {
-  demoEvents,
-  demoMembers,
-  demoMessages,
-  demoParticipants,
-  demoStats,
-} from "../demo";
-import { EventItem, MessageItem, Paranza, Participant } from "../types";
+  EventItem,
+  Me,
+  Member,
+  MessageItem,
+  Paranza,
+  Participant,
+  Stats as StatsData,
+} from "../types";
 import {
   Avatar,
-  Banner,
   BottomNav,
-  Brand,
   Button,
   Card,
   Field,
@@ -48,46 +48,136 @@ const eventTypes = [
 ] as const;
 
 export function ManagerApp({
-  paranza,
+  token,
+  paranza: initialParanza,
   onLogout,
 }: {
+  token?: string;
   paranza?: Paranza;
   onLogout: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("home");
-  const [events, setEvents] = useState<EventItem[]>(demoEvents);
-  const [messages, setMessages] = useState<MessageItem[]>(demoMessages);
+  const [authToken, setAuthToken] = useState(token);
+  const [me, setMe] = useState<Me>();
+  const [events, setEvents] = useState<EventItem[]>([]);
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [stats, setStats] = useState<StatsData>({
+    memberCount: 0,
+    activeMemberCount: 0,
+    eventCount: 0,
+    attendanceRate: 0,
+  });
   const [selectedEvent, setSelectedEvent] = useState<EventItem>();
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  async function resolveToken() {
+    if (authToken) {
+      return authToken;
+    }
+    const login = await demoLogin("capoparanza");
+    setAuthToken(login.token);
+    return login.token;
+  }
+
+  async function loadData() {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const currentToken = await resolveToken();
+      const [meData, eventData, messageData, memberData, statsData] =
+        await Promise.all([
+          api.me(currentToken),
+          api.events(currentToken),
+          api.messages(currentToken),
+          api.members(currentToken),
+          api.stats(currentToken),
+        ]);
+      setMe(meData);
+      setEvents(eventData);
+      setMessages(messageData);
+      setMembers(memberData);
+      setStats(statsData);
+    } catch (cause) {
+      setLoadError(
+        cause instanceof Error
+          ? cause.message
+          : "Non è stato possibile caricare i dati della paranza.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadData();
+  }, []);
+
+  async function openParticipants(event: EventItem) {
+    setSelectedEvent(event);
+    setParticipants([]);
+    try {
+      const currentToken = await resolveToken();
+      setParticipants(await api.participants(currentToken, event.id));
+    } catch (cause) {
+      setLoadError(
+        cause instanceof Error
+          ? cause.message
+          : "Non è stato possibile caricare i partecipanti.",
+      );
+    }
+  }
+
+  const paranza = me?.paranza ?? initialParanza;
 
   return (
     <View style={{ flex: 1 }}>
       {selectedEvent ? (
         <ParticipantsView
           event={selectedEvent}
-          participants={demoParticipants}
+          participants={participants}
           onBack={() => setSelectedEvent(undefined)}
         />
       ) : (
         <>
           {tab === "home" && (
             <Home
+              me={me}
               events={events}
               paranza={paranza}
-              onOpenEvent={setSelectedEvent}
+              stats={stats}
+              loading={loading}
+              error={loadError}
+              onRetry={loadData}
+              onOpenEvent={openParticipants}
             />
           )}
           {tab === "events" && (
             <Events
+              token={authToken}
               events={events}
               setEvents={setEvents}
-              onOpenParticipants={setSelectedEvent}
+              onOpenParticipants={openParticipants}
             />
           )}
           {tab === "messages" && (
-            <Messages messages={messages} setMessages={setMessages} />
+            <Messages
+              token={authToken}
+              memberCount={stats.memberCount}
+              messages={messages}
+              setMessages={setMessages}
+            />
           )}
-          {tab === "members" && <Members />}
-          {tab === "stats" && <Stats events={events} onLogout={onLogout} />}
+          {tab === "members" && <Members members={members} />}
+          {tab === "stats" && (
+            <Stats
+              events={events}
+              stats={stats}
+              onLogout={onLogout}
+            />
+          )}
           <BottomNav
             items={[...nav]}
             active={tab}
@@ -100,54 +190,129 @@ export function ManagerApp({
 }
 
 function Home({
+  me,
   events,
   paranza,
+  stats,
+  loading,
+  error,
+  onRetry,
   onOpenEvent,
 }: {
+  me?: Me;
   events: EventItem[];
   paranza?: Paranza;
+  stats: StatsData;
+  loading: boolean;
+  error: string;
+  onRetry: () => void;
   onOpenEvent: (event: EventItem) => void;
 }) {
   const next = events[0];
+  const attendance = Math.round(stats.attendanceRate);
+
   return (
     <Screen key="manager-home" withBottomNav>
       <View style={styles.homeHeader}>
-        <View style={styles.headerSpacer} />
-        <Brand compact />
+        <View style={{ flex: 1 }} />
         <HeaderButton icon="settings-outline" />
       </View>
 
-      <Banner name={paranza?.name ?? "Orgoglio Nolano"} />
+      <ParanzaHero paranza={paranza} />
 
       <View>
         <Text style={styles.hello}>
-          Ciao {paranza?.managerName?.split(" ")[0] ?? "Luca"}
+          Ciao {me?.user.firstName ?? paranza?.managerName?.split(" ")[0] ?? "Luca"}
         </Text>
         <Text style={styles.subtle}>
-          Capoparanza di {paranza?.name ?? "Orgoglio Nolano"}
+          Capoparanza della paranza {paranza?.name ?? "—"}
         </Text>
       </View>
 
+      {error ? (
+        <Card>
+          <Text style={styles.errorText}>{error}</Text>
+          <Button title="Riprova" variant="secondary" onPress={onRetry} />
+        </Card>
+      ) : null}
+
       <View style={styles.metricRows}>
         <View style={styles.metricRow}>
-          <Metric label="Cullatori" value={32} icon="people-outline" />
-          <Metric label="Uomini attivi" value={28} icon="person-outline" />
+          <Metric
+            label="Cullatori"
+            value={loading ? "—" : stats.memberCount}
+            icon="people-outline"
+          />
+          <Metric
+            label="Cullatori attivi"
+            value={loading ? "—" : stats.activeMemberCount}
+            icon="person-outline"
+          />
         </View>
         <View style={styles.metricRow}>
-          <Metric label="Eventi" value={24} icon="calendar-outline" />
-          <Metric label="Presenza media" value="75%" ring />
+          <Metric
+            label="Eventi"
+            value={loading ? "—" : stats.eventCount}
+            icon="calendar-outline"
+          />
+          <Metric
+            label="Presenza media"
+            value={loading ? "—" : attendance + "%"}
+            ring
+          />
         </View>
       </View>
 
       <SectionTitle action="Vedi tutti">Prossimi eventi</SectionTitle>
-      {next ? (
+      {loading ? (
+        <Card>
+          <Text style={styles.subtle}>Caricamento eventi...</Text>
+        </Card>
+      ) : next ? (
         <Pressable onPress={() => onOpenEvent(next)}>
           <Card>
             <EventRow event={next} />
           </Card>
         </Pressable>
-      ) : null}
+      ) : (
+        <Card>
+          <Text style={styles.subtle}>Nessun evento in programma.</Text>
+        </Card>
+      )}
     </Screen>
+  );
+}
+
+function ParanzaHero({ paranza }: { paranza?: Paranza }) {
+  const primary = paranza?.primaryColor || "#FFFFFF";
+  const secondary = paranza?.secondaryColor || theme.colors.blue;
+
+  return (
+    <View style={[styles.paranzaHero, { backgroundColor: primary }]}>
+      <View style={[styles.paranzaHeroBand, { backgroundColor: secondary }]} />
+      <View style={styles.paranzaLogoWrap}>
+        {paranza?.logoUrl ? (
+          <Image
+            source={{ uri: paranza.logoUrl }}
+            resizeMode="contain"
+            style={styles.paranzaLogoImage}
+          />
+        ) : (
+          <Ionicons name="flag-outline" size={34} color={theme.colors.blue} />
+        )}
+      </View>
+      <View style={styles.paranzaHeroCopy}>
+        <Text style={styles.paranzaHeroEyebrow}>LA TUA PARANZA</Text>
+        <Text
+          style={styles.paranzaHeroName}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.65}
+        >
+          {paranza?.name ?? "Paranza"}
+        </Text>
+      </View>
+    </View>
   );
 }
 
