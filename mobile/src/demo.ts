@@ -1,5 +1,5 @@
 export const PERSON_IMAGE = require("../assets/mock-person.jpg");
-export const WELCOME_IMAGE = { uri: "https://upload.wikimedia.org/wikipedia/commons/1/19/Nola_Duomo_-_Festa_Dei_Gigli_2010.jpg" };
+export const WELCOME_IMAGE = { uri: "https://www.comune.nola.na.it/immagini/WhatsApp-Image-2024-04-16-at-13.06.52.jpeg" };
 export const EVENT_IMAGE = { uri: "https://upload.wikimedia.org/wikipedia/commons/1/19/Nola_Duomo_-_Festa_Dei_Gigli_2010.jpg" };
 export const BANNER_IMAGE = require("../assets/mock-banner.jpg");
 
