@@ -674,6 +674,102 @@ function RoleCard({
   );
 }
 
+function ColorSlot({
+  label,
+  color,
+  active,
+  onPress,
+}: {
+  label: string;
+  color: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const safeColor = /^#[0-9A-F]{6}$/i.test(color) ? color : "#FFFFFF";
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[styles.colorSlot, active && styles.colorSlotActive]}
+    >
+      <View style={[styles.colorSlotSwatch, { backgroundColor: safeColor }]} />
+      <View style={{ flex: 1 }}>
+        <Text style={styles.colorSlotLabel}>{label}</Text>
+        <Text style={styles.colorSlotValue}>{color}</Text>
+      </View>
+      {active ? (
+        <Ionicons name="checkmark-circle" size={22} color={theme.colors.blue} />
+      ) : null}
+    </Pressable>
+  );
+}
+
+function ParanzaColorPreview({
+  name,
+  primaryColor,
+  secondaryColor,
+}: {
+  name: string;
+  primaryColor: string;
+  secondaryColor: string;
+}) {
+  return (
+    <View style={[styles.colorPreview, { backgroundColor: primaryColor }]}>
+      <View
+        style={[
+          styles.colorPreviewBand,
+          { backgroundColor: secondaryColor },
+        ]}
+      />
+      <View style={styles.colorPreviewContent}>
+        <Text
+          style={[
+            styles.colorPreviewEyebrow,
+            { color: contrastText(primaryColor) },
+          ]}
+        >
+          PARANZA
+        </Text>
+        <Text
+          style={[
+            styles.colorPreviewName,
+            { color: contrastText(primaryColor) },
+          ]}
+          numberOfLines={1}
+        >
+          {name.toUpperCase()}
+        </Text>
+      </View>
+      <View
+        style={[
+          styles.colorPreviewBadge,
+          { backgroundColor: secondaryColor },
+        ]}
+      >
+        <Text
+          style={[
+            styles.colorPreviewBadgeText,
+            { color: contrastText(secondaryColor) },
+          ]}
+        >
+          MP
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+function contrastText(hex: string) {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) {
+    return "#0A2F78";
+  }
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#0A2F78" : "#FFFFFF";
+}
+
 function MiniStat({ value, label }: { value: string; label: string }) {
   return (
     <View style={styles.miniStat}>
@@ -812,6 +908,11 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     marginVertical: 4,
   },
+  managerAvatarImage: {
+    width: 92,
+    height: 92,
+    borderRadius: 46,
+  },
   managerAvatarPlaceholder: {
     width: 92,
     height: 92,
@@ -819,6 +920,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#EEF2F8",
     alignItems: "center",
     justifyContent: "center",
+  },
+  photoAction: {
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    minHeight: 36,
+    paddingHorizontal: 10,
+  },
+  photoActionText: {
+    color: theme.colors.blue,
+    fontSize: 14,
+    fontWeight: "800",
   },
   cameraBadge: {
     position: "absolute",
@@ -834,10 +948,53 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
+  colorSlotRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  colorSlot: {
+    flex: 1,
+    minHeight: 64,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  colorSlotActive: {
+    borderWidth: 2,
+    borderColor: theme.colors.blue,
+    backgroundColor: theme.colors.blueSoft,
+  },
+  colorSlotSwatch: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: "#C8D1DD",
+  },
+  colorSlotLabel: {
+    color: theme.colors.blueDark,
+    fontSize: 13,
+    fontWeight: "900",
+  },
+  colorSlotValue: {
+    color: theme.colors.text,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  colorHelp: {
+    color: theme.colors.text,
+    fontSize: 13,
+    lineHeight: 19,
+  },
   palette: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 15,
+    gap: 12,
   },
   colorCircle: {
     width: 46,
@@ -849,8 +1006,60 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   colorSelected: {
-    borderWidth: 2,
+    borderWidth: 3,
     borderColor: theme.colors.blue,
+  },
+  customColorRow: {
+    flexDirection: "row",
+    gap: 10,
+  },
+  customColorField: {
+    flex: 1,
+  },
+  colorPreview: {
+    minHeight: 112,
+    borderRadius: 16,
+    overflow: "hidden",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+  },
+  colorPreviewBand: {
+    position: "absolute",
+    right: -18,
+    top: -18,
+    width: 132,
+    height: 150,
+    transform: [{ rotate: "18deg" }],
+  },
+  colorPreviewContent: {
+    maxWidth: "68%",
+    gap: 4,
+  },
+  colorPreviewEyebrow: {
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 2.2,
+    opacity: 0.8,
+  },
+  colorPreviewName: {
+    fontSize: 24,
+    lineHeight: 29,
+    fontWeight: "900",
+  },
+  colorPreviewBadge: {
+    position: "absolute",
+    right: 18,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.65)",
+  },
+  colorPreviewBadgeText: {
+    fontSize: 14,
+    fontWeight: "900",
   },
   labelUpper: {
     color: theme.colors.text,
@@ -859,7 +1068,8 @@ const styles = StyleSheet.create({
   },
   selectedColors: {
     flexDirection: "row",
-    gap: 30,
+    flexWrap: "wrap",
+    gap: 22,
   },
   colorLabel: {
     flexDirection: "row",
