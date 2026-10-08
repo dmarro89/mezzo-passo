@@ -12,6 +12,24 @@ on:
 jobs:
   snapshots:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: mezzo_passo
+          POSTGRES_USER: mezzo
+          POSTGRES_PASSWORD: mezzo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mezzo -d mezzo_passo"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://mezzo:mezzo@localhost:5432/mezzo_passo?sslmode=disable
+      PORT: "8080"
+      EXPO_PUBLIC_API_URL: http://127.0.0.1:8080
     defaults:
       run:
         working-directory: mobile
@@ -20,6 +38,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.13.1"
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - name: Start API
+        working-directory: backend
+        run: |
+          nohup go run ./cmd/api > /tmp/mezzo-passo-api.log 2>&1 &
+          for i in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/mezzo-passo-api.log
+          exit 1
       - name: Install app dependencies
         run: npm install
       - name: Install web and Playwright dependencies
@@ -43,6 +77,8 @@ jobs:
           node e2e/ui-snapshots.mjs || {
             echo "===== EXPO LOG ====="
             cat /tmp/expo.log
+            echo "===== API LOG ====="
+            cat /tmp/mezzo-passo-api.log
             exit 1
           }
       - uses: actions/upload-artifact@v4
