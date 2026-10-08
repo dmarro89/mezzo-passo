@@ -703,7 +703,7 @@ LIMIT 5
 	}
 	defer rows.Close()
 
-	var history []model.AttendancePoint
+	history := make([]model.AttendancePoint, 0, 5)
 	var totalRate float64
 	for rows.Next() {
 		var point model.AttendancePoint
