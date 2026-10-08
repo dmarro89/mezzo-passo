@@ -42,8 +42,18 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           bounces={false}
         >
           <View style={styles.welcomeImage}>
-            <Image source={WELCOME_IMAGE} resizeMode="cover" style={styles.welcomePhoto} />
+            <Image
+              source={WELCOME_IMAGE}
+              resizeMode="cover"
+              blurRadius={16}
+              style={styles.welcomeBackdrop}
+            />
             <View style={styles.welcomeShade} />
+            <Image
+              source={WELCOME_IMAGE}
+              resizeMode="contain"
+              style={styles.welcomePhoto}
+            />
           </View>
 
           <View style={styles.loginSheet}>
@@ -383,13 +393,18 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     backgroundColor: "#D9DEE7",
   },
+  welcomeBackdrop: {
+    ...StyleSheet.absoluteFill,
+    opacity: 0.52,
+  },
   welcomePhoto: {
+    ...StyleSheet.absoluteFill,
     width: "100%",
     height: "100%",
   },
   welcomeShade: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(5,31,78,0.04)",
+    backgroundColor: "rgba(5,31,78,0.18)",
   },
   loginSheet: {
     flexShrink: 0,
@@ -399,7 +414,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 30,
     paddingHorizontal: 24,
     paddingTop: 26,
-    paddingBottom: 32,
+    paddingBottom: 44,
     gap: 14,
   },
   loginTitle: {
@@ -420,6 +435,8 @@ const styles = StyleSheet.create({
     minHeight: 44,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 2,
+    marginBottom: 8,
   },
   createAccount: {
     color: theme.colors.blue,
