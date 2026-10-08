@@ -27,7 +27,7 @@ async function enterManager() {
   await page.getByText("Sono un capoparanza", { exact: true }).click();
   await page.getByText("Avanti", { exact: true }).click();
   await page.getByText("Avanti", { exact: true }).click();
-  await page.getByText("Avanti", { exact: true }).click();
+  await page.getByText("Crea paranza", { exact: true }).click();
   await page.getByText("Vai alla tua paranza", { exact: true }).click();
 }
 
@@ -51,7 +51,8 @@ await page.getByText("Avanti", { exact: true }).click();
 await shot("03-manager-create-paranza");
 await page.getByText("Avanti", { exact: true }).click();
 await shot("04-manager-colors");
-await page.getByText("Avanti", { exact: true }).click();
+await page.getByText("Crea paranza", { exact: true }).click();
+await page.getByText("Paranza creata!", { exact: true }).waitFor();
 await shot("05-manager-success");
 await page.getByText("Vai alla tua paranza", { exact: true }).click();
 await shot("06-manager-home");
