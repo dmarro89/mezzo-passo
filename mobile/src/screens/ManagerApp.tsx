@@ -532,18 +532,18 @@ function ParticipantsView({
     <Screen key="manager-participants">
       <PageHeader title={event.title} onBack={onBack} />
       <Text style={styles.participantMeta}>
-        Sab 20 Lug 2024 · 20:00 - 22:00{"\n"}Zona Duomo, Nola
+        {formatEventDateTime(event)}{"\n"}{event.location}
       </Text>
 
       <View style={styles.segmentHeader}>
-        <Text style={styles.segmentActive}>Partecipanti (32)</Text>
+        <Text style={styles.segmentActive}>Partecipanti ({participants.length})</Text>
         <Text style={styles.segmentInactive}>Dettagli</Text>
       </View>
 
       <View style={styles.responseRow}>
-        <ResponseBox value="24" label="Confermati" tone="success" />
-        <ResponseBox value="4" label="Forse" tone="maybe" />
-        <ResponseBox value="4" label="Assenti" tone="danger" />
+        <ResponseBox value={String(counts.confirmed)} label="Confermati" tone="success" />
+        <ResponseBox value={String(counts.maybe)} label="Forse" tone="maybe" />
+        <ResponseBox value={String(counts.absent)} label="Assenti" tone="danger" />
       </View>
 
       <View style={styles.search}>
@@ -749,10 +749,16 @@ function ResponseBox({
 
 function EventRow({ event }: { event: EventItem }) {
   const date = new Date(event.startsAt);
+  const end = new Date(event.endsAt);
   return (
     <View style={styles.eventRow}>
       <View style={styles.dateBadge}>
-        <Text style={styles.dateWeek}>SAB</Text>
+        <Text style={styles.dateWeek}>
+          {date
+            .toLocaleDateString("it-IT", { weekday: "short" })
+            .replace(".", "")
+            .toUpperCase()}
+        </Text>
         <Text style={styles.dateDay}>{date.getDate().toString().padStart(2, "0")}</Text>
         <Text style={styles.dateMonth}>
           {date.toLocaleDateString("it-IT", { month: "short" }).replace(".", "").toUpperCase()}
@@ -760,7 +766,9 @@ function EventRow({ event }: { event: EventItem }) {
       </View>
       <View style={{ flex: 1, gap: 1 }}>
         <Text style={styles.cardStrong}>{event.title}</Text>
-        <Text style={styles.subtle}>20:00 - 22:00</Text>
+        <Text style={styles.subtle}>
+          {formatTime(date)} - {formatTime(end)}
+        </Text>
         <Text style={styles.subtle}>{event.location}</Text>
         <View style={styles.participantsInline}>
           <Ionicons name="people" size={11} color={theme.colors.blue} />
@@ -783,6 +791,25 @@ function contrastText(hex: string) {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6
     ? theme.colors.blueDark
     : "#FFFFFF";
+}
+
+function formatTime(value: Date) {
+  return value.toLocaleTimeString("it-IT", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatEventDateTime(event: EventItem) {
+  const start = new Date(event.startsAt);
+  const end = new Date(event.endsAt);
+  const date = start.toLocaleDateString("it-IT", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+  return date + " · " + formatTime(start) + " - " + formatTime(end);
 }
 
 function formatShortDate(value: string) {
