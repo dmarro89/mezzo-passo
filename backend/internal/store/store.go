@@ -205,7 +205,7 @@ RETURNING id
 		if _, err := tx.ExecContext(ctx, `
 INSERT INTO memberships (user_id, paranza_id, active)
 VALUES ($1, $2, $3)
-ON CONFLICT (user_id) DO UPDATE SET paranza_id=EXCLUDED.paranza_id, active=EXCLUDED.active
+ON CONFLICT (user_id) DO NOTHING
 `, id, paranzaID, m.active); err != nil {
 			return fmt.Errorf("seed membership: %w", err)
 		}
@@ -664,30 +664,135 @@ func (s *Store) Stats(ctx context.Context, userID int64) (model.Stats, error) {
 	if err != nil {
 		return model.Stats{}, err
 	}
+
 	var st model.Stats
 	if err := s.db.QueryRowContext(ctx, `
 SELECT COUNT(*), COUNT(*) FILTER (WHERE active)
-FROM memberships WHERE paranza_id=$1
+FROM memberships
+WHERE paranza_id=$1
 `, p.ID).Scan(&st.MemberCount, &st.ActiveMemberCount); err != nil {
 		return st, err
 	}
-	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM events WHERE paranza_id=$1`, p.ID).Scan(&st.EventCount); err != nil {
-		return st, err
-	}
-	var eventID sql.NullInt64
+
 	if err := s.db.QueryRowContext(ctx, `
-SELECT id FROM events WHERE paranza_id=$1 ORDER BY starts_at ASC LIMIT 1
-`, p.ID).Scan(&eventID); err != nil && !errors.Is(err, sql.ErrNoRows) {
+SELECT
+	COUNT(*),
+	COUNT(*) FILTER (WHERE starts_at >= NOW())
+FROM events
+WHERE paranza_id=$1
+`, p.ID).Scan(&st.EventCount, &st.UpcomingEventCount); err != nil {
 		return st, err
 	}
-	if eventID.Valid && st.MemberCount > 0 {
-		var confirmed int
-		if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM rsvps WHERE event_id=$1 AND status='confirmed'`, eventID.Int64).Scan(&confirmed); err != nil {
+
+	rows, err := s.db.QueryContext(ctx, `
+SELECT
+	e.id,
+	e.title,
+	e.starts_at,
+	COUNT(*) FILTER (WHERE r.status='confirmed')
+FROM events e
+LEFT JOIN rsvps r ON r.event_id=e.id
+WHERE e.paranza_id=$1
+  AND EXISTS (SELECT 1 FROM rsvps rr WHERE rr.event_id=e.id)
+GROUP BY e.id,e.title,e.starts_at
+ORDER BY e.starts_at DESC
+LIMIT 5
+`, p.ID)
+	if err != nil {
+		return st, err
+	}
+	defer rows.Close()
+
+	var history []model.AttendancePoint
+	var totalRate float64
+	for rows.Next() {
+		var point model.AttendancePoint
+		if err := rows.Scan(
+			&point.EventID,
+			&point.Title,
+			&point.StartsAt,
+			&point.ConfirmedCount,
+		); err != nil {
 			return st, err
 		}
-		st.AttendanceRate = float64(confirmed) / float64(st.MemberCount) * 100
+		point.MemberCount = st.MemberCount
+		if point.MemberCount > 0 {
+			point.Rate = float64(point.ConfirmedCount) / float64(point.MemberCount) * 100
+		}
+		totalRate += point.Rate
+		history = append(history, point)
+	}
+	if err := rows.Err(); err != nil {
+		return st, err
+	}
+
+	for i, j := 0, len(history)-1; i < j; i, j = i+1, j-1 {
+		history[i], history[j] = history[j], history[i]
+	}
+	st.AttendanceHistory = history
+	if len(history) > 0 {
+		st.AttendanceRate = totalRate / float64(len(history))
 	}
 	return st, nil
+}
+
+func (s *Store) SetMemberActive(ctx context.Context, userID, memberID int64, active bool) error {
+	if role, err := s.role(ctx, userID); err != nil || role != "capoparanza" {
+		if err != nil {
+			return err
+		}
+		return ErrForbidden
+	}
+	p, err := s.getParanza(ctx, userID)
+	if err != nil {
+		return err
+	}
+	result, err := s.db.ExecContext(ctx, `
+UPDATE memberships
+SET active=$1
+WHERE user_id=$2 AND paranza_id=$3
+`, active, memberID, p.ID)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (s *Store) MarkMessageRead(ctx context.Context, userID, messageID int64) error {
+	p, err := s.getParanza(ctx, userID)
+	if err != nil {
+		return err
+	}
+	var allowed bool
+	if err := s.db.QueryRowContext(ctx, `
+SELECT EXISTS(
+	SELECT 1
+	FROM messages msg
+	JOIN memberships membership ON membership.paranza_id=msg.paranza_id
+	WHERE msg.id=$1
+	  AND msg.paranza_id=$2
+	  AND membership.user_id=$3
+)
+`, messageID, p.ID, userID).Scan(&allowed); err != nil {
+		return err
+	}
+	if !allowed {
+		return ErrForbidden
+	}
+	_, err = s.db.ExecContext(ctx, `
+INSERT INTO message_reads (message_id,user_id)
+VALUES ($1,$2)
+ON CONFLICT (message_id,user_id)
+DO UPDATE SET read_at=NOW()
+`, messageID, userID)
+	return err
 }
 
 func (s *Store) Notifications(ctx context.Context, userID int64) ([]model.Notification, error) {
