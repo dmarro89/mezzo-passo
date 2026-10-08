@@ -40,13 +40,31 @@ jobs:
         run: go mod tidy
       - name: Test
         run: go test ./...
-      - name: Smoke test API and database seed
+      - name: Smoke test API and paranza onboarding
         run: |
           go run ./cmd/api >/tmp/mezzo-passo-api.log 2>&1 &
           PID=$!
           for i in {1..20}; do
             if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
-              curl --fail --silent                 -X POST http://127.0.0.1:8080/api/v1/demo/login                 -H 'Content-Type: application/json'                 -d '{"role":"capoparanza"}' >/dev/null
+              LOGIN=$(curl --fail --silent \
+                -X POST http://127.0.0.1:8080/api/v1/demo/login \
+                -H 'Content-Type: application/json' \
+                -d '{"role":"capoparanza"}')
+              TOKEN=$(printf '%s' "$LOGIN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+
+              SAVED=$(curl --fail --silent \
+                -X PUT http://127.0.0.1:8080/api/v1/onboarding/paranza \
+                -H "Authorization: Bearer $TOKEN" \
+                -H 'Content-Type: application/json' \
+                -d '{"name":"Orgoglio Nolano Test","description":"Onboarding smoke test","managerName":"Luca Iorio","primaryColor":"#FFFFFF","secondaryColor":"#0A4DBA"}')
+
+              printf '%s' "$SAVED" | python3 -c 'import json,sys; p=json.load(sys.stdin); assert p["name"]=="Orgoglio Nolano Test"; assert p["description"]=="Onboarding smoke test"; assert p["managerName"]=="Luca Iorio"'
+
+              ME=$(curl --fail --silent \
+                http://127.0.0.1:8080/api/v1/me \
+                -H "Authorization: Bearer $TOKEN")
+              printf '%s' "$ME" | python3 -c 'import json,sys; me=json.load(sys.stdin); assert me["paranza"]["name"]=="Orgoglio Nolano Test"'
+
               kill $PID
               wait $PID || true
               exit 0
