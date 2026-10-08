@@ -40,39 +40,99 @@ jobs:
         run: go mod tidy
       - name: Test
         run: go test ./...
-      - name: Smoke test API and paranza onboarding
+      - name: Smoke test manager backend features
         run: |
           go run ./cmd/api >/tmp/mezzo-passo-api.log 2>&1 &
           PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+
           for i in {1..20}; do
             if curl --fail --silent http://127.0.0.1:8080/health >/dev/null; then
-              LOGIN=$(curl --fail --silent \
+              MANAGER_LOGIN=$(curl --fail --silent \
                 -X POST http://127.0.0.1:8080/api/v1/demo/login \
                 -H 'Content-Type: application/json' \
                 -d '{"role":"capoparanza"}')
-              TOKEN=$(printf '%s' "$LOGIN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+              MANAGER_TOKEN=$(printf '%s' "$MANAGER_LOGIN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
 
               SAVED=$(curl --fail --silent \
                 -X PUT http://127.0.0.1:8080/api/v1/onboarding/paranza \
-                -H "Authorization: Bearer $TOKEN" \
+                -H "Authorization: Bearer $MANAGER_TOKEN" \
                 -H 'Content-Type: application/json' \
                 -d '{"name":"Orgoglio Nolano Test","description":"Onboarding smoke test","managerName":"Luca Iorio","primaryColor":"#FFFFFF","secondaryColor":"#0A4DBA"}')
-
-              printf '%s' "$SAVED" | python3 -c 'import json,sys; p=json.load(sys.stdin); assert p["name"]=="Orgoglio Nolano Test"; assert p["description"]=="Onboarding smoke test"; assert p["managerName"]=="Luca Iorio"'
+              printf '%s' "$SAVED" | python3 -c 'import json,sys; p=json.load(sys.stdin); assert p["name"]=="Orgoglio Nolano Test"; assert p["managerName"]=="Luca Iorio"'
 
               ME=$(curl --fail --silent \
                 http://127.0.0.1:8080/api/v1/me \
-                -H "Authorization: Bearer $TOKEN")
+                -H "Authorization: Bearer $MANAGER_TOKEN")
               printf '%s' "$ME" | python3 -c 'import json,sys; me=json.load(sys.stdin); assert me["paranza"]["name"]=="Orgoglio Nolano Test"'
+
+              STATS=$(curl --fail --silent \
+                http://127.0.0.1:8080/api/v1/stats \
+                -H "Authorization: Bearer $MANAGER_TOKEN")
+              printf '%s' "$STATS" | python3 -c 'import json,sys; s=json.load(sys.stdin); assert s["memberCount"]==8; assert s["activeMemberCount"]==7; assert s["eventCount"]>=3; assert round(s["attendanceRate"])==75; assert len(s["attendanceHistory"])>=1'
+
+              EVENTS=$(curl --fail --silent \
+                http://127.0.0.1:8080/api/v1/events \
+                -H "Authorization: Bearer $MANAGER_TOKEN")
+              printf '%s' "$EVENTS" | python3 -c 'import json,sys; e=json.load(sys.stdin); assert len(e)>=3; assert any(x["participantCount"]==6 for x in e)'
+
+              STARTS_AT=$(date -u -d '+30 days' +%Y-%m-%dT20:00:00Z)
+              ENDS_AT=$(date -u -d '+30 days' +%Y-%m-%dT22:00:00Z)
+              CREATED_EVENT=$(curl --fail --silent \
+                -X POST http://127.0.0.1:8080/api/v1/events \
+                -H "Authorization: Bearer $MANAGER_TOKEN" \
+                -H 'Content-Type: application/json' \
+                -d "{\"type\":\"Bandiera\",\"title\":\"Evento API\",\"description\":\"Smoke test\",\"location\":\"Piazza Duomo, Nola\",\"startsAt\":\"$STARTS_AT\",\"endsAt\":\"$ENDS_AT\",\"required\":true,\"attire\":\"Maglia bianca\"}")
+              printf '%s' "$CREATED_EVENT" | python3 -c 'import json,sys; e=json.load(sys.stdin); assert e["title"]=="Evento API"; assert e["location"]=="Piazza Duomo, Nola"'
+
+              MEMBERS=$(curl --fail --silent \
+                http://127.0.0.1:8080/api/v1/members \
+                -H "Authorization: Bearer $MANAGER_TOKEN")
+              ACTIVE_MEMBER_ID=$(printf '%s' "$MEMBERS" | python3 -c 'import json,sys; members=json.load(sys.stdin); print(next(m["userId"] for m in members if m["isActive"]))')
+              export ACTIVE_MEMBER_ID
+              curl --fail --silent \
+                -X PUT "http://127.0.0.1:8080/api/v1/members/$ACTIVE_MEMBER_ID/active" \
+                -H "Authorization: Bearer $MANAGER_TOKEN" \
+                -H 'Content-Type: application/json' \
+                -d '{"active":false}' >/dev/null
+              MEMBERS_AFTER=$(curl --fail --silent \
+                http://127.0.0.1:8080/api/v1/members \
+                -H "Authorization: Bearer $MANAGER_TOKEN")
+              printf '%s' "$MEMBERS_AFTER" | python3 -c 'import json,sys,os; members=json.load(sys.stdin); mid=int(os.environ["ACTIVE_MEMBER_ID"]); assert next(m for m in members if m["userId"]==mid)["isActive"] is False'
+
+              CREATED_MESSAGE=$(curl --fail --silent \
+                -X POST http://127.0.0.1:8080/api/v1/messages \
+                -H "Authorization: Bearer $MANAGER_TOKEN" \
+                -H 'Content-Type: application/json' \
+                -d '{"title":"Messaggio API","body":"Messaggio smoke test"}')
+              MESSAGE_ID=$(printf '%s' "$CREATED_MESSAGE" | python3 -c 'import json,sys; m=json.load(sys.stdin); assert m["recipientCount"]==8; assert m["readCount"]==0; print(m["id"])')
+              export MESSAGE_ID
+
+              CULLATORE_LOGIN=$(curl --fail --silent \
+                -X POST http://127.0.0.1:8080/api/v1/demo/login \
+                -H 'Content-Type: application/json' \
+                -d '{"role":"cullatore"}')
+              CULLATORE_TOKEN=$(printf '%s' "$CULLATORE_LOGIN" | python3 -c 'import json,sys; print(json.load(sys.stdin)["token"])')
+              curl --fail --silent \
+                -X PUT "http://127.0.0.1:8080/api/v1/messages/$MESSAGE_ID/read" \
+                -H "Authorization: Bearer $CULLATORE_TOKEN" \
+                -H 'Content-Type: application/json' \
+                -d '{}' >/dev/null
+
+              MESSAGES=$(curl --fail --silent \
+                http://127.0.0.1:8080/api/v1/messages \
+                -H "Authorization: Bearer $MANAGER_TOKEN")
+              printf '%s' "$MESSAGES" | python3 -c 'import json,sys,os; messages=json.load(sys.stdin); mid=int(os.environ["MESSAGE_ID"]); msg=next(m for m in messages if m["id"]==mid); assert msg["readCount"]==1; assert msg["recipientCount"]==8'
 
               kill $PID
               wait $PID || true
+              trap - EXIT
               exit 0
             fi
             sleep 1
           done
+
           cat /tmp/mezzo-passo-api.log
-          kill $PID || true
           exit 1
 
   mobile:
