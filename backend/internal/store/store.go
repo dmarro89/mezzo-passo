@@ -70,11 +70,22 @@ CREATE TABLE IF NOT EXISTS paranze (
 	manager_user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
 	primary_color TEXT NOT NULL DEFAULT '#FFFFFF',
 	secondary_color TEXT NOT NULL DEFAULT '#0B4DB8',
+	logo_url TEXT NOT NULL DEFAULT '',
 	invite_code TEXT NOT NULL UNIQUE
 );
 
 ALTER TABLE paranze
 ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
+
+ALTER TABLE paranze
+ADD COLUMN IF NOT EXISTS logo_url TEXT NOT NULL DEFAULT '';
+
+UPDATE paranze p
+SET logo_url = u.photo_url
+FROM users u
+WHERE p.manager_user_id = u.id
+  AND p.logo_url = ''
+  AND u.photo_url <> '';
 
 CREATE TABLE IF NOT EXISTS memberships (
 	user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -307,14 +318,14 @@ func (s *Store) GetMe(ctx context.Context, userID int64) (model.Me, error) {
 func (s *Store) getParanza(ctx context.Context, userID int64) (model.Paranza, error) {
 	var p model.Paranza
 	err := s.db.QueryRowContext(ctx, `
-SELECT p.id, p.name, p.description, p.primary_color, p.secondary_color, p.invite_code,
+SELECT p.id, p.name, p.description, p.logo_url, p.primary_color, p.secondary_color, p.invite_code,
        u.first_name || ' ' || u.last_name
 FROM paranze p
 JOIN users u ON u.id=p.manager_user_id
 LEFT JOIN memberships m ON m.paranza_id=p.id
 WHERE p.manager_user_id=$1 OR m.user_id=$1
 LIMIT 1
-`, userID).Scan(&p.ID, &p.Name, &p.Description, &p.PrimaryColor, &p.SecondaryColor, &p.InviteCode, &p.ManagerName)
+`, userID).Scan(&p.ID, &p.Name, &p.Description, &p.LogoURL, &p.PrimaryColor, &p.SecondaryColor, &p.InviteCode, &p.ManagerName)
 	if errors.Is(err, sql.ErrNoRows) {
 		return p, ErrNotFound
 	}
@@ -337,7 +348,7 @@ type ParanzaOnboardingParams struct {
 	ManagerName    string
 	PrimaryColor   string
 	SecondaryColor string
-	PhotoURL       string
+	LogoURL        string
 }
 
 func (s *Store) UpsertParanzaOnboarding(ctx context.Context, userID int64, in ParanzaOnboardingParams) (model.Paranza, error) {
@@ -368,9 +379,9 @@ func (s *Store) UpsertParanzaOnboarding(ctx context.Context, userID int64, in Pa
 
 	if _, err := tx.ExecContext(ctx, `
 UPDATE users
-SET first_name=$1, last_name=$2, photo_url=$3
-WHERE id=$4
-`, firstName, lastName, in.PhotoURL, userID); err != nil {
+SET first_name=$1, last_name=$2
+WHERE id=$3
+`, firstName, lastName, userID); err != nil {
 		return model.Paranza{}, fmt.Errorf("update manager profile: %w", err)
 	}
 
@@ -378,26 +389,32 @@ WHERE id=$4
 	var p model.Paranza
 	if err := tx.QueryRowContext(ctx, `
 INSERT INTO paranze (
-	name, description, manager_user_id, primary_color, secondary_color, invite_code
+	name, description, manager_user_id, primary_color, secondary_color, logo_url, invite_code
 )
-VALUES ($1,$2,$3,$4,$5,$6)
+VALUES ($1,$2,$3,$4,$5,$6,$7)
 ON CONFLICT (manager_user_id) DO UPDATE SET
 	name=EXCLUDED.name,
 	description=EXCLUDED.description,
 	primary_color=EXCLUDED.primary_color,
-	secondary_color=EXCLUDED.secondary_color
-RETURNING id, name, description, primary_color, secondary_color, invite_code
+	secondary_color=EXCLUDED.secondary_color,
+	logo_url=CASE
+		WHEN EXCLUDED.logo_url <> '' THEN EXCLUDED.logo_url
+		ELSE paranze.logo_url
+	END
+RETURNING id, name, description, logo_url, primary_color, secondary_color, invite_code
 `,
 		strings.TrimSpace(in.Name),
 		strings.TrimSpace(in.Description),
 		userID,
 		in.PrimaryColor,
 		in.SecondaryColor,
+		in.LogoURL,
 		inviteCode,
 	).Scan(
 		&p.ID,
 		&p.Name,
 		&p.Description,
+		&p.LogoURL,
 		&p.PrimaryColor,
 		&p.SecondaryColor,
 		&p.InviteCode,
