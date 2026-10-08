@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -65,11 +66,15 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS paranze (
 	id BIGSERIAL PRIMARY KEY,
 	name TEXT NOT NULL,
+	description TEXT NOT NULL DEFAULT '',
 	manager_user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
 	primary_color TEXT NOT NULL DEFAULT '#FFFFFF',
 	secondary_color TEXT NOT NULL DEFAULT '#0B4DB8',
 	invite_code TEXT NOT NULL UNIQUE
 );
+
+ALTER TABLE paranze
+ADD COLUMN IF NOT EXISTS description TEXT NOT NULL DEFAULT '';
 
 CREATE TABLE IF NOT EXISTS memberships (
 	user_id BIGINT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -131,24 +136,27 @@ func (s *Store) seed(ctx context.Context) error {
 	defer tx.Rollback()
 
 	var managerID int64
-	if err := tx.QueryRowContext(ctx, `
+	if _, err := tx.ExecContext(ctx, `
 INSERT INTO users (demo_key, role, first_name, last_name, birth_date, position)
 VALUES ('manager', 'capoparanza', 'Luca', 'Iorio', '1988-04-20', '')
-ON CONFLICT (demo_key) DO UPDATE SET first_name=EXCLUDED.first_name, last_name=EXCLUDED.last_name
-RETURNING id
-`).Scan(&managerID); err != nil {
+ON CONFLICT (demo_key) DO NOTHING
+`); err != nil {
 		return fmt.Errorf("seed manager: %w", err)
+	}
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM users WHERE demo_key='manager'`).Scan(&managerID); err != nil {
+		return fmt.Errorf("load seeded manager: %w", err)
 	}
 
 	var paranzaID int64
-	if err := tx.QueryRowContext(ctx, `
-INSERT INTO paranze (name, manager_user_id, primary_color, secondary_color, invite_code)
-VALUES ('Orgoglio Nolano', $1, '#FFFFFF', '#0B4DB8', 'MEZZOPASSO')
-ON CONFLICT (manager_user_id) DO UPDATE
-SET name=EXCLUDED.name, primary_color=EXCLUDED.primary_color, secondary_color=EXCLUDED.secondary_color
-RETURNING id
-`, managerID).Scan(&paranzaID); err != nil {
+	if _, err := tx.ExecContext(ctx, `
+INSERT INTO paranze (name, description, manager_user_id, primary_color, secondary_color, invite_code)
+VALUES ('Orgoglio Nolano', 'Tradizione, Passione, Nola. Uniti sotto gli stessi colori.', $1, '#FFFFFF', '#0B4DB8', 'MEZZOPASSO')
+ON CONFLICT (manager_user_id) DO NOTHING
+`, managerID); err != nil {
 		return fmt.Errorf("seed paranza: %w", err)
+	}
+	if err := tx.QueryRowContext(ctx, `SELECT id FROM paranze WHERE manager_user_id=$1`, managerID).Scan(&paranzaID); err != nil {
+		return fmt.Errorf("load seeded paranza: %w", err)
 	}
 
 	members := []seedUser{
@@ -299,14 +307,14 @@ func (s *Store) GetMe(ctx context.Context, userID int64) (model.Me, error) {
 func (s *Store) getParanza(ctx context.Context, userID int64) (model.Paranza, error) {
 	var p model.Paranza
 	err := s.db.QueryRowContext(ctx, `
-SELECT p.id, p.name, p.primary_color, p.secondary_color, p.invite_code,
+SELECT p.id, p.name, p.description, p.primary_color, p.secondary_color, p.invite_code,
        u.first_name || ' ' || u.last_name
 FROM paranze p
 JOIN users u ON u.id=p.manager_user_id
 LEFT JOIN memberships m ON m.paranza_id=p.id
 WHERE p.manager_user_id=$1 OR m.user_id=$1
 LIMIT 1
-`, userID).Scan(&p.ID, &p.Name, &p.PrimaryColor, &p.SecondaryColor, &p.InviteCode, &p.ManagerName)
+`, userID).Scan(&p.ID, &p.Name, &p.Description, &p.PrimaryColor, &p.SecondaryColor, &p.InviteCode, &p.ManagerName)
 	if errors.Is(err, sql.ErrNoRows) {
 		return p, ErrNotFound
 	}
@@ -320,6 +328,87 @@ func (s *Store) role(ctx context.Context, userID int64) (string, error) {
 		return "", ErrNotFound
 	}
 	return role, err
+}
+
+
+type ParanzaOnboardingParams struct {
+	Name           string
+	Description    string
+	ManagerName    string
+	PrimaryColor   string
+	SecondaryColor string
+}
+
+func (s *Store) UpsertParanzaOnboarding(ctx context.Context, userID int64, in ParanzaOnboardingParams) (model.Paranza, error) {
+	role, err := s.role(ctx, userID)
+	if err != nil {
+		return model.Paranza{}, err
+	}
+	if role != "capoparanza" {
+		return model.Paranza{}, ErrForbidden
+	}
+
+	managerName := strings.TrimSpace(in.ManagerName)
+	parts := strings.Fields(managerName)
+	firstName := ""
+	lastName := ""
+	if len(parts) > 0 {
+		firstName = parts[0]
+	}
+	if len(parts) > 1 {
+		lastName = strings.Join(parts[1:], " ")
+	}
+
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return model.Paranza{}, err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, `
+UPDATE users
+SET first_name=$1, last_name=$2
+WHERE id=$3
+`, firstName, lastName, userID); err != nil {
+		return model.Paranza{}, fmt.Errorf("update manager profile: %w", err)
+	}
+
+	inviteCode := fmt.Sprintf("MP-%06d", userID)
+	var p model.Paranza
+	if err := tx.QueryRowContext(ctx, `
+INSERT INTO paranze (
+	name, description, manager_user_id, primary_color, secondary_color, invite_code
+)
+VALUES ($1,$2,$3,$4,$5,$6)
+ON CONFLICT (manager_user_id) DO UPDATE SET
+	name=EXCLUDED.name,
+	description=EXCLUDED.description,
+	primary_color=EXCLUDED.primary_color,
+	secondary_color=EXCLUDED.secondary_color
+RETURNING id, name, description, primary_color, secondary_color, invite_code
+`,
+		strings.TrimSpace(in.Name),
+		strings.TrimSpace(in.Description),
+		userID,
+		in.PrimaryColor,
+		in.SecondaryColor,
+		inviteCode,
+	).Scan(
+		&p.ID,
+		&p.Name,
+		&p.Description,
+		&p.PrimaryColor,
+		&p.SecondaryColor,
+		&p.InviteCode,
+	); err != nil {
+		return model.Paranza{}, fmt.Errorf("upsert paranza onboarding: %w", err)
+	}
+
+	p.ManagerName = strings.TrimSpace(strings.TrimSpace(firstName + " " + lastName))
+	if err := tx.Commit(); err != nil {
+		return model.Paranza{}, err
+	}
+	return p, nil
 }
 
 func (s *Store) Events(ctx context.Context, userID int64) ([]model.Event, error) {
