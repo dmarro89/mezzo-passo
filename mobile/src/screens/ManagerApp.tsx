@@ -1,5 +1,13 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Image, Pressable, StyleSheet, Switch, Text, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, demoLogin } from "../api";
 import {
@@ -66,7 +74,9 @@ export function ManagerApp({
     memberCount: 0,
     activeMemberCount: 0,
     eventCount: 0,
+    upcomingEventCount: 0,
     attendanceRate: 0,
+    attendanceHistory: [],
   });
   const [selectedEvent, setSelectedEvent] = useState<EventItem>();
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -159,6 +169,7 @@ export function ManagerApp({
               token={authToken}
               events={events}
               setEvents={setEvents}
+              setStats={setStats}
               onOpenParticipants={openParticipants}
             />
           )}
@@ -170,7 +181,14 @@ export function ManagerApp({
               setMessages={setMessages}
             />
           )}
-          {tab === "members" && <Members members={members} />}
+          {tab === "members" && (
+            <Members
+              token={authToken}
+              members={members}
+              setMembers={setMembers}
+              setStats={setStats}
+            />
+          )}
           {tab === "stats" && (
             <Stats
               events={events}
