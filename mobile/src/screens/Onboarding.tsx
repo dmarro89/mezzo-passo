@@ -593,7 +593,15 @@ export function Onboarding({
 
       {role === "capoparanza" ? (
         <Card style={styles.identityRow}>
-          <ParanzaLogo size={72} />
+          {managerPhotoUri ? (
+            <Image
+              source={{ uri: managerPhotoUri }}
+              resizeMode="cover"
+              style={styles.successManagerPhoto}
+            />
+          ) : (
+            <ParanzaLogo size={72} />
+          )}
           <View style={{ flex: 1, gap: 4 }}>
             <Text style={styles.identityName}>
               {savedParanza?.name ?? paranzaName}
@@ -1171,6 +1179,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 14,
     paddingHorizontal: 16,
+  },
+  successManagerPhoto: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: theme.colors.line,
+    backgroundColor: theme.colors.blueSoft,
   },
   identityName: {
     color: theme.colors.blueDark,
