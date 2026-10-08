@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import {
   Image,
   Pressable,
+  SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -32,35 +34,46 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
 
   if (step === "welcome") {
     return (
-      <View style={styles.welcomeRoot}>
-        <View style={styles.welcomeImage}>
-          <Image source={WELCOME_IMAGE} resizeMode="cover" style={styles.welcomePhoto} />
-          <View style={styles.welcomeShade} />
-        </View>
+      <SafeAreaView style={styles.welcomeRoot}>
+        <ScrollView
+          style={styles.welcomeScroll}
+          contentContainerStyle={styles.welcomeContent}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.welcomeImage}>
+            <Image source={WELCOME_IMAGE} resizeMode="cover" style={styles.welcomePhoto} />
+            <View style={styles.welcomeShade} />
+          </View>
 
-        <View style={styles.loginSheet}>
-          <Text style={styles.loginTitle}>Benvenuto su Mezzo Passo</Text>
-          <Text style={styles.loginBody}>
-            L’app dedicata ai cullatori della Festa dei Gigli di Nola.
-          </Text>
-          <Button
-            title="Continua con Google"
-            icon="logo-google"
-            large
-            onPress={() => setStep("role")}
-          />
-          <Button
-            title="Continua con Apple"
-            icon="logo-apple"
-            variant="secondary"
-            large
-            onPress={() => setStep("role")}
-          />
-          <Pressable onPress={() => setStep("role")}>
-            <Text style={styles.createAccount}>Crea un account</Text>
-          </Pressable>
-        </View>
-      </View>
+          <View style={styles.loginSheet}>
+            <Text style={styles.loginTitle}>Benvenuto su Mezzo Passo</Text>
+            <Text style={styles.loginBody}>
+              L’app dedicata ai cullatori della Festa dei Gigli di Nola.
+            </Text>
+            <Button
+              title="Continua con Google"
+              icon="logo-google"
+              large
+              onPress={() => setStep("role")}
+            />
+            <Button
+              title="Continua con Apple"
+              icon="logo-apple"
+              variant="secondary"
+              large
+              onPress={() => setStep("role")}
+            />
+            <Pressable
+              accessibilityRole="button"
+              style={styles.createAccountButton}
+              onPress={() => setStep("role")}
+            >
+              <Text style={styles.createAccount}>Crea un account</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
     );
   }
 
@@ -361,9 +374,12 @@ function MiniStat({ value, label }: { value: string; label: string }) {
 
 const styles = StyleSheet.create({
   welcomeRoot: { flex: 1, backgroundColor: "#FFFFFF" },
+  welcomeScroll: { flex: 1 },
+  welcomeContent: { flexGrow: 1 },
   welcomeImage: {
-    height: "68%",
-    minHeight: 470,
+    flexGrow: 1,
+    flexBasis: 0,
+    minHeight: 200,
     overflow: "hidden",
     backgroundColor: "#D9DEE7",
   },
@@ -376,14 +392,14 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(5,31,78,0.04)",
   },
   loginSheet: {
-    flex: 1,
+    flexShrink: 0,
     marginTop: -24,
     backgroundColor: "#FFFFFF",
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
     paddingHorizontal: 24,
     paddingTop: 26,
-    paddingBottom: 28,
+    paddingBottom: 32,
     gap: 14,
   },
   loginTitle: {
@@ -400,13 +416,17 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 4,
   },
+  createAccountButton: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   createAccount: {
     color: theme.colors.blue,
     textAlign: "center",
     fontSize: 15,
     fontWeight: "800",
     textDecorationLine: "underline",
-    marginTop: 4,
   },
 
   headerLine: {
