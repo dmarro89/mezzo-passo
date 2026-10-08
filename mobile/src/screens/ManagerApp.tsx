@@ -226,7 +226,9 @@ function Home({
   onRetry: () => void;
   onOpenEvent: (event: EventItem) => void;
 }) {
-  const next = events[0];
+  const next = events.find(
+    (event) => new Date(event.startsAt).getTime() >= Date.now(),
+  );
   const attendance = Math.round(stats.attendanceRate);
 
   return (
@@ -740,7 +742,7 @@ function ParticipantsView({
 
       {participants.map((p) => (
         <View key={p.userId} style={styles.personRow}>
-          <Avatar initials={initials(p.name)} size={44} />
+          <Avatar initials={initials(p.name)} uri={p.photoUrl} size={44} />
           <View style={{ flex: 1 }}>
             <Text style={styles.personName}>{p.name}</Text>
             <Text style={styles.personPosition}>{p.position}</Text>
@@ -752,7 +754,9 @@ function ParticipantsView({
                 ? "success"
                 : p.status === "maybe"
                   ? "maybe"
-                  : "danger"
+                  : p.status === "absent"
+                    ? "danger"
+                    : "default"
             }
           />
           <Ionicons name="ellipsis-horizontal" size={21} color={theme.colors.blue} />
@@ -830,7 +834,7 @@ function Members({
 
   return (
     <Screen key="manager-members" withBottomNav>
-      <PageHeader title="I miei cullatori" actionIcon="add" />
+      <PageHeader title="I miei cullatori" />
 
       <View style={styles.search}>
         <Ionicons name="search-outline" size={18} color={theme.colors.muted} />
@@ -920,21 +924,38 @@ function Stats({
       </Card>
 
       <Text style={styles.statsTitle}>Andamento presenze</Text>
-      <View style={styles.chartWrap}>
-        {[58, 42, 67, 74, 66].map((value, i) => (
-          <View key={i} style={styles.chartColumn}>
-            <View style={[styles.chartBar, { height: value }]} />
-            <Text style={styles.chartLabel}>{["Apr", "Mag", "Giu", "Lug", "Ago"][i]}</Text>
+      {stats.attendanceHistory?.length ? (
+        <View style={styles.chartWrap}>
+          {stats.attendanceHistory.map((point) => (
+            <View key={point.eventId} style={styles.chartColumn}>
+              <View
+                style={[
+                  styles.chartBar,
+                  { height: Math.max(2, Math.round(point.rate * 0.72)) },
+                ]}
+              />
+              <Text style={styles.chartLabel}>
+                {new Date(point.startsAt)
+                  .toLocaleDateString("it-IT", { month: "short" })
+                  .replace(".", "")}
+              </Text>
+            </View>
+          ))}
+          <View style={styles.chartAxis}>
+            <Text style={styles.axisLabel}>100%</Text>
+            <Text style={styles.axisLabel}>75%</Text>
+            <Text style={styles.axisLabel}>50%</Text>
+            <Text style={styles.axisLabel}>25%</Text>
+            <Text style={styles.axisLabel}>0%</Text>
           </View>
-        ))}
-        <View style={styles.chartAxis}>
-          <Text style={styles.axisLabel}>100%</Text>
-          <Text style={styles.axisLabel}>75%</Text>
-          <Text style={styles.axisLabel}>50%</Text>
-          <Text style={styles.axisLabel}>25%</Text>
-          <Text style={styles.axisLabel}>0%</Text>
         </View>
-      </View>
+      ) : (
+        <Card>
+          <Text style={styles.subtle}>
+            Le statistiche di presenza compariranno dopo le prime risposte agli eventi.
+          </Text>
+        </Card>
+      )}
 
       <SectionTitle action="Vedi tutti">Prossimi eventi</SectionTitle>
       {events.slice(0, 2).map((event) => (
@@ -1052,6 +1073,46 @@ function EventRow({ event }: { event: EventItem }) {
   );
 }
 
+function formatInputDate(value: Date) {
+  const day = value.getDate().toString().padStart(2, "0");
+  const month = (value.getMonth() + 1).toString().padStart(2, "0");
+  return day + "/" + month + "/" + value.getFullYear();
+}
+
+function parseLocalDateTime(dateValue: string, timeValue: string) {
+  const dateMatch = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(dateValue.trim());
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(timeValue.trim());
+  if (!dateMatch || !timeMatch) {
+    return undefined;
+  }
+  const day = Number(dateMatch[1]);
+  const month = Number(dateMatch[2]);
+  const year = Number(dateMatch[3]);
+  const hour = Number(timeMatch[1]);
+  const minute = Number(timeMatch[2]);
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return undefined;
+  }
+  const value = new Date(year, month - 1, day, hour, minute, 0, 0);
+  if (
+    value.getFullYear() !== year ||
+    value.getMonth() !== month - 1 ||
+    value.getDate() !== day
+  ) {
+    return undefined;
+  }
+  return value;
+}
+
 function contrastText(hex: string) {
   const clean = hex.replace("#", "");
   if (clean.length !== 6) {
@@ -1103,7 +1164,8 @@ function initials(name: string) {
 function statusLabel(status: Participant["status"]) {
   if (status === "confirmed") return "Confermato";
   if (status === "maybe") return "Forse";
-  return "Assente";
+  if (status === "absent") return "Assente";
+  return "Non risposto";
 }
 
 const styles = StyleSheet.create({
@@ -1216,6 +1278,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   detailPair: { flexDirection: "row", gap: 10 },
+  formHalf: { flex: 1 },
   detailBox: {
     flex: 1,
     minHeight: 62,
@@ -1247,6 +1310,17 @@ const styles = StyleSheet.create({
     marginTop: -6,
   },
   body: { color: theme.colors.text, fontSize: 15, lineHeight: 22 },
+  messageMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginTop: 2,
+  },
+  messageReadText: {
+    color: theme.colors.blue,
+    fontSize: 12,
+    fontWeight: "700",
+  },
   cardStrong: { color: theme.colors.blueDark, fontSize: 17, fontWeight: "900" },
   dateText: { color: theme.colors.muted, fontSize: 12 },
   participantMeta: {
@@ -1293,6 +1367,12 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   searchPlaceholder: { color: theme.colors.muted, fontSize: 14 },
+  searchInput: {
+    flex: 1,
+    color: theme.colors.ink,
+    fontSize: 14,
+    paddingVertical: 8,
+  },
   personRow: {
     minHeight: 66,
     flexDirection: "row",
