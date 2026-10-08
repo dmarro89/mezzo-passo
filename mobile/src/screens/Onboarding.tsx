@@ -748,23 +748,10 @@ function ParanzaColorPreview({
             { color: contrastText(primaryColor) },
           ]}
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.55}
         >
           {name.toUpperCase()}
-        </Text>
-      </View>
-      <View
-        style={[
-          styles.colorPreviewBadge,
-          { backgroundColor: secondaryColor },
-        ]}
-      >
-        <Text
-          style={[
-            styles.colorPreviewBadgeText,
-            { color: contrastText(secondaryColor) },
-          ]}
-        >
-          MP
         </Text>
       </View>
     </View>
@@ -1045,7 +1032,7 @@ const styles = StyleSheet.create({
     transform: [{ rotate: "18deg" }],
   },
   colorPreviewContent: {
-    maxWidth: "68%",
+    width: "84%",
     gap: 4,
   },
   colorPreviewEyebrow: {
@@ -1058,21 +1045,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     lineHeight: 29,
     fontWeight: "900",
-  },
-  colorPreviewBadge: {
-    position: "absolute",
-    right: 18,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.65)",
-  },
-  colorPreviewBadgeText: {
-    fontSize: 14,
-    fontWeight: "900",
+    flexShrink: 1,
   },
   labelUpper: {
     color: theme.colors.text,
