@@ -402,9 +402,11 @@ export function BottomNav({
 export function Avatar({
   initials,
   size = 44,
+  uri,
 }: {
   initials: string;
   size?: number;
+  uri?: string;
 }) {
   return (
     <View
@@ -414,11 +416,11 @@ export function Avatar({
         { width: size, height: size, borderRadius: size / 2 },
       ]}
     >
-      <Image
-        source={PERSON_IMAGE}
-        resizeMode="cover"
-        style={styles.fillPhoto}
-      />
+      {uri ? (
+        <Image source={{ uri }} resizeMode="cover" style={styles.fillPhoto} />
+      ) : (
+        <Text style={styles.avatarText}>{initials}</Text>
+      )}
     </View>
   );
 }
