@@ -5,6 +5,8 @@ import {
   MessageItem,
   NotificationItem,
   Participant,
+  Paranza,
+  ParanzaOnboardingInput,
   Role,
   Stats,
 } from "./types";
@@ -27,7 +29,15 @@ async function request<T>(
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `HTTP ${response.status}`);
+    try {
+      const parsed = JSON.parse(body) as { error?: string };
+      throw new Error(parsed.error || `HTTP ${response.status}`);
+    } catch (error) {
+      if (error instanceof Error && error.message !== body) {
+        throw error;
+      }
+      throw new Error(body || `HTTP ${response.status}`);
+    }
   }
   return response.json() as Promise<T>;
 }
@@ -41,6 +51,12 @@ export async function demoLogin(role: Role): Promise<{ token: string }> {
 
 export const api = {
   me: (token: string) => request<Me>("/api/v1/me", {}, token),
+  saveParanzaOnboarding: (token: string, input: ParanzaOnboardingInput) =>
+    request<Paranza>(
+      "/api/v1/onboarding/paranza",
+      { method: "PUT", body: JSON.stringify(input) },
+      token,
+    ),
   events: (token: string) => request<EventItem[]>("/api/v1/events", {}, token),
   messages: (token: string) =>
     request<MessageItem[]>("/api/v1/messages", {}, token),
