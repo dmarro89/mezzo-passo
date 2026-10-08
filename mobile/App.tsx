@@ -3,20 +3,33 @@ import { StatusBar } from "react-native";
 import { Onboarding } from "./src/screens/Onboarding";
 import { ManagerApp } from "./src/screens/ManagerApp";
 import { CullatoreApp } from "./src/screens/CullatoreApp";
-import { Role } from "./src/types";
+import { Paranza, Role } from "./src/types";
+
+type Session = {
+  role: Role;
+  token?: string;
+  paranza?: Paranza;
+};
 
 export default function App() {
-  const [role, setRole] = useState<Role>();
+  const [session, setSession] = useState<Session>();
 
   return (
     <>
       <StatusBar barStyle="dark-content" backgroundColor="#FBFCFE" />
-      {!role ? (
-        <Onboarding onEnter={setRole} />
-      ) : role === "capoparanza" ? (
-        <ManagerApp onLogout={() => setRole(undefined)} />
+      {!session ? (
+        <Onboarding
+          onEnter={(role, token, paranza) =>
+            setSession({ role, token, paranza })
+          }
+        />
+      ) : session.role === "capoparanza" ? (
+        <ManagerApp
+          paranza={session.paranza}
+          onLogout={() => setSession(undefined)}
+        />
       ) : (
-        <CullatoreApp onLogout={() => setRole(undefined)} />
+        <CullatoreApp onLogout={() => setSession(undefined)} />
       )}
     </>
   );
