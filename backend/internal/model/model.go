@@ -16,6 +16,7 @@ type Paranza struct {
 	ID             int64  `json:"id"`
 	Name           string `json:"name"`
 	Description    string `json:"description"`
+	LogoURL        string `json:"logoUrl,omitempty"`
 	PrimaryColor   string `json:"primaryColor"`
 	SecondaryColor string `json:"secondaryColor"`
 	InviteCode     string `json:"inviteCode,omitempty"`
