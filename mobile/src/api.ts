@@ -62,6 +62,12 @@ export const api = {
   messages: (token: string) =>
     request<MessageItem[]>("/api/v1/messages", {}, token),
   members: (token: string) => request<Member[]>("/api/v1/members", {}, token),
+  setMemberActive: (token: string, userId: number, active: boolean) =>
+    request<{ userId: number; active: boolean }>(
+      `/api/v1/members/${userId}/active`,
+      { method: "PUT", body: JSON.stringify({ active }) },
+      token,
+    ),
   stats: (token: string) => request<Stats>("/api/v1/stats", {}, token),
   notifications: (token: string) =>
     request<NotificationItem[]>("/api/v1/notifications", {}, token),
@@ -85,6 +91,12 @@ export const api = {
     request<MessageItem>(
       "/api/v1/messages",
       { method: "POST", body: JSON.stringify({ title, body }) },
+      token,
+    ),
+  markMessageRead: (token: string, messageId: number) =>
+    request<{ messageId: number; read: boolean }>(
+      `/api/v1/messages/${messageId}/read`,
+      { method: "PUT", body: "{}" },
       token,
     ),
   createEvent: (
