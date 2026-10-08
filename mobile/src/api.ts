@@ -29,15 +29,16 @@ async function request<T>(
 
   if (!response.ok) {
     const body = await response.text();
+    let message = body || `HTTP ${response.status}`;
     try {
       const parsed = JSON.parse(body) as { error?: string };
-      throw new Error(parsed.error || `HTTP ${response.status}`);
-    } catch (error) {
-      if (error instanceof Error && error.message !== body) {
-        throw error;
+      if (parsed.error) {
+        message = parsed.error;
       }
-      throw new Error(body || `HTTP ${response.status}`);
+    } catch {
+      // Keep the raw response body when it is not JSON.
     }
+    throw new Error(message);
   }
   return response.json() as Promise<T>;
 }
