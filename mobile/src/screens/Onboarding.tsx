@@ -110,7 +110,8 @@ export function Onboarding({
       setStep("success");
       return;
     }
-    if (selectedColors.length !== 2) {
+    const [primaryColor, secondaryColor] = selectedColors;
+    if (!primaryColor || !secondaryColor || selectedColors.length !== 2) {
       setError("Seleziona esattamente due colori.");
       return;
     }
@@ -129,8 +130,8 @@ export function Onboarding({
         name: paranzaName.trim(),
         description: description.trim(),
         managerName: managerName.trim(),
-        primaryColor: selectedColors[0],
-        secondaryColor: selectedColors[1],
+        primaryColor,
+        secondaryColor,
       });
       setSavedParanza(paranza);
       setStep("success");
