@@ -36,7 +36,9 @@ func New(st *store.Store, log *slog.Logger) http.Handler {
 	mux.Handle("PUT /api/v1/events/{id}/rsvp", s.auth(http.HandlerFunc(s.rsvp)))
 	mux.Handle("GET /api/v1/messages", s.auth(http.HandlerFunc(s.messages)))
 	mux.Handle("POST /api/v1/messages", s.auth(http.HandlerFunc(s.createMessage)))
+	mux.Handle("PUT /api/v1/messages/{id}/read", s.auth(http.HandlerFunc(s.markMessageRead)))
 	mux.Handle("GET /api/v1/members", s.auth(http.HandlerFunc(s.members)))
+	mux.Handle("PUT /api/v1/members/{id}/active", s.auth(http.HandlerFunc(s.setMemberActive)))
 	mux.Handle("GET /api/v1/stats", s.auth(http.HandlerFunc(s.stats)))
 	mux.Handle("GET /api/v1/notifications", s.auth(http.HandlerFunc(s.notifications)))
 
@@ -254,6 +256,18 @@ func (s *Server) createMessage(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, v)
 }
 
+func (s *Server) markMessageRead(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	if err := s.store.MarkMessageRead(r.Context(), userID(r.Context()), id); err != nil {
+		s.handleStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"messageId": id, "read": true})
+}
+
 func (s *Server) members(w http.ResponseWriter, r *http.Request) {
 	v, err := s.store.Members(r.Context(), userID(r.Context()))
 	if err != nil {
@@ -261,6 +275,25 @@ func (s *Server) members(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, v)
+}
+
+func (s *Server) setMemberActive(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	var in struct {
+		Active bool `json:"active"`
+	}
+	if err := decodeJSON(r, &in); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid JSON body")
+		return
+	}
+	if err := s.store.SetMemberActive(r.Context(), userID(r.Context()), id, in.Active); err != nil {
+		s.handleStoreError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"userId": id, "active": in.Active})
 }
 
 func (s *Server) stats(w http.ResponseWriter, r *http.Request) {
