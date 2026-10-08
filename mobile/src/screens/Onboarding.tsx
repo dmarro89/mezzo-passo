@@ -9,7 +9,8 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { Role } from "../types";
+import { Paranza, Role } from "../types";
+import { demoLogin, api } from "../api";
 import { WELCOME_IMAGE } from "../demo";
 import {
   Avatar,
@@ -27,10 +28,122 @@ import { theme } from "../theme";
 
 type Step = "welcome" | "role" | "profile" | "customize" | "success";
 
-export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
+const PARANZA_COLORS = [
+  "#FFFFFF",
+  "#0A4DBA",
+  "#B8C0CF",
+  "#8F9DB2",
+  "#617693",
+  "#5B92F4",
+  "#4B859B",
+  "#7B899C",
+  "#B0BBCB",
+  "#D6D9DE",
+];
+
+const COLOR_NAMES: Record<string, string> = {
+  "#FFFFFF": "Bianco",
+  "#0A4DBA": "Blu",
+  "#B8C0CF": "Grigio chiaro",
+  "#8F9DB2": "Grigio",
+  "#617693": "Blu ardesia",
+  "#5B92F4": "Azzurro",
+  "#4B859B": "Petrolio",
+  "#7B899C": "Grigio blu",
+  "#B0BBCB": "Perla",
+  "#D6D9DE": "Ghiaccio",
+};
+
+export function Onboarding({
+  onEnter,
+}: {
+  onEnter: (role: Role, token?: string, paranza?: Paranza) => void;
+}) {
   const [step, setStep] = useState<Step>("welcome");
   const [role, setRole] = useState<Role>("capoparanza");
   const [position, setPosition] = useState("Base sinistra");
+
+  const [paranzaName, setParanzaName] = useState("Orgoglio Nolano");
+  const [managerName, setManagerName] = useState("Luca Iorio");
+  const [description, setDescription] = useState(
+    "Tradizione, Passione, Nola.\nUniti sotto gli stessi colori.",
+  );
+  const [selectedColors, setSelectedColors] = useState<string[]>([
+    "#FFFFFF",
+    "#0A4DBA",
+  ]);
+  const [sessionToken, setSessionToken] = useState<string>();
+  const [savedParanza, setSavedParanza] = useState<Paranza>();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  function toggleColor(color: string) {
+    setError("");
+    setSelectedColors((current) => {
+      if (current.includes(color)) {
+        return current.filter((item) => item !== color);
+      }
+      if (current.length >= 2) {
+        return current;
+      }
+      return [...current, color];
+    });
+  }
+
+  function goToCustomize() {
+    setError("");
+    if (role === "capoparanza") {
+      if (!paranzaName.trim()) {
+        setError("Inserisci il nome della paranza.");
+        return;
+      }
+      if (!managerName.trim()) {
+        setError("Inserisci il nome del capoparanza.");
+        return;
+      }
+    }
+    setStep("customize");
+  }
+
+  async function saveOnboarding() {
+    if (role !== "capoparanza") {
+      setStep("success");
+      return;
+    }
+    if (selectedColors.length !== 2) {
+      setError("Seleziona esattamente due colori.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      let token = sessionToken;
+      if (!token) {
+        const login = await demoLogin("capoparanza");
+        token = login.token;
+        setSessionToken(token);
+      }
+
+      const paranza = await api.saveParanzaOnboarding(token, {
+        name: paranzaName.trim(),
+        description: description.trim(),
+        managerName: managerName.trim(),
+        primaryColor: selectedColors[0],
+        secondaryColor: selectedColors[1],
+      });
+      setSavedParanza(paranza);
+      setStep("success");
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "Non è stato possibile salvare la paranza.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
 
   if (step === "welcome") {
     return (
@@ -99,7 +212,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           selected={role === "cullatore"}
           icon="people"
           title="Sono un cullatore"
-          body="Partecipo agli eventi, comunico con la tua paranza e resta aggiornato."
+          body="Partecipo agli eventi, ricevo le comunicazioni della paranza e resto aggiornato."
           onPress={() => setRole("cullatore")}
         />
         <RoleCard
@@ -135,13 +248,23 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
               </View>
             </View>
 
-            <Field large label="Nome paranza" value="Orgoglio Nolano" onChangeText={() => {}} />
-            <Field large label="Capoparanza" value="Luca Iorio" onChangeText={() => {}} />
+            <Field
+              large
+              label="Nome paranza"
+              value={paranzaName}
+              onChangeText={setParanzaName}
+            />
+            <Field
+              large
+              label="Capoparanza"
+              value={managerName}
+              onChangeText={setManagerName}
+            />
             <Field
               large
               label="Descrizione (opzionale)"
-              value={"Tradizione, Passione, Nola.\nUniti sotto gli stessi colori."}
-              onChangeText={() => {}}
+              value={description}
+              onChangeText={setDescription}
               multiline
             />
           </>
@@ -175,8 +298,9 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           </>
         )}
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <View style={styles.pushBottom} />
-        <Button large title="Avanti" onPress={() => setStep("customize")} />
+        <Button large title="Avanti" onPress={goToCustomize} />
       </Screen>
     );
   }
@@ -195,38 +319,44 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
             </Title>
 
             <View style={styles.palette}>
-              {["#FFFFFF", "#0A4DBA", "#B8C0CF", "#8F9DB2", "#617693", "#5B92F4", "#4B859B", "#7B899C", "#B0BBCB", "#D6D9DE"].map((color, i) => (
-                <View
-                  key={color}
-                  style={[
-                    styles.colorCircle,
-                    { backgroundColor: color },
-                    (i === 0 || i === 1) && styles.colorSelected,
-                  ]}
-                >
-                  {i === 0 || i === 1 ? (
-                    <Ionicons
-                      name="checkmark"
-                      size={19}
-                      color={i === 0 ? theme.colors.blue : "#FFFFFF"}
-                    />
-                  ) : null}
-                </View>
-              ))}
+              {PARANZA_COLORS.map((color) => {
+                const selected = selectedColors.includes(color);
+                return (
+                  <Pressable
+                    key={color}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Seleziona ${COLOR_NAMES[color] ?? color}`}
+                    onPress={() => toggleColor(color)}
+                    style={[
+                      styles.colorCircle,
+                      { backgroundColor: color },
+                      selected && styles.colorSelected,
+                    ]}
+                  >
+                    {selected ? (
+                      <Ionicons
+                        name="checkmark"
+                        size={19}
+                        color={color === "#FFFFFF" ? theme.colors.blue : "#FFFFFF"}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
             </View>
 
             <Text style={styles.labelUpper}>Anteprima</Text>
-            <Banner />
+            <Banner name={paranzaName || "La tua paranza"} />
             <Text style={styles.labelUpper}>Colori selezionati</Text>
             <View style={styles.selectedColors}>
-              <View style={styles.colorLabel}>
-                <View style={[styles.swatch, { backgroundColor: "#FFFFFF" }]} />
-                <Text style={styles.smallBody}>Bianco</Text>
-              </View>
-              <View style={styles.colorLabel}>
-                <View style={[styles.swatch, { backgroundColor: theme.colors.blue }]} />
-                <Text style={styles.smallBody}>Blu</Text>
-              </View>
+              {selectedColors.map((color) => (
+                <View key={color} style={styles.colorLabel}>
+                  <View style={[styles.swatch, { backgroundColor: color }]} />
+                  <Text style={styles.smallBody}>
+                    {COLOR_NAMES[color] ?? color}
+                  </Text>
+                </View>
+              ))}
             </View>
           </>
         ) : (
@@ -261,11 +391,19 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
           </>
         )}
 
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
         <View style={styles.pushBottom} />
         <Button
           large
-          title={role === "capoparanza" ? "Avanti" : "Unisciti alla paranza"}
-          onPress={() => setStep("success")}
+          disabled={saving || (role === "capoparanza" && selectedColors.length !== 2)}
+          title={
+            saving
+              ? "Salvataggio..."
+              : role === "capoparanza"
+                ? "Crea paranza"
+                : "Unisciti alla paranza"
+          }
+          onPress={saveOnboarding}
         />
       </Screen>
     );
@@ -284,7 +422,7 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
         </Text>
         <Text style={styles.successBody}>
           {role === "capoparanza"
-            ? "Orgoglio Nolano è pronta. Ora puoi invitare i tuoi cullatori e iniziare a organizzare gli eventi."
+            ? `${savedParanza?.name ?? paranzaName} è pronta. Ora puoi invitare i tuoi cullatori e iniziare a organizzare gli eventi.`
             : "Ora sei parte della paranza Orgoglio Nolano. Sei pronto a vivere insieme la Festa dei Gigli di Nola!"}
         </Text>
       </View>
@@ -293,8 +431,12 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
         <Card style={styles.identityRow}>
           <ParanzaLogo size={72} />
           <View style={{ flex: 1, gap: 4 }}>
-            <Text style={styles.identityName}>Orgoglio Nolano</Text>
-            <Text style={styles.identityMeta}>Capoparanza{"\n"}Luca Iorio</Text>
+            <Text style={styles.identityName}>
+              {savedParanza?.name ?? paranzaName}
+            </Text>
+            <Text style={styles.identityMeta}>
+              Capoparanza{"\n"}{savedParanza?.managerName ?? managerName}
+            </Text>
           </View>
           <Ionicons name="chevron-forward" size={24} color={theme.colors.blue} />
         </Card>
@@ -313,13 +455,13 @@ export function Onboarding({ onEnter }: { onEnter: (role: Role) => void }) {
             large
             title="Invita i cullatori"
             icon="person-add-outline"
-            onPress={() => onEnter(role)}
+            onPress={() => onEnter(role, sessionToken, savedParanza)}
           />
           <Button
             large
             title="Vai alla tua paranza"
             variant="secondary"
-            onPress={() => onEnter(role)}
+            onPress={() => onEnter(role, sessionToken, savedParanza)}
           />
         </>
       ) : (
@@ -437,6 +579,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginTop: 2,
     marginBottom: 8,
+  },
+  errorText: {
+    color: theme.colors.danger,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight: "700",
   },
   createAccount: {
     color: theme.colors.blue,
