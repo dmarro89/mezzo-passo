@@ -45,31 +45,47 @@ type Event struct {
 type Participant struct {
 	UserID    int64  `json:"userId"`
 	Name      string `json:"name"`
+	PhotoURL  string `json:"photoUrl,omitempty"`
 	Position  string `json:"position"`
 	Status    string `json:"status"`
 	IsActive  bool   `json:"isActive"`
 }
 
 type Message struct {
-	ID         int64     `json:"id"`
-	Title      string    `json:"title"`
-	Body       string    `json:"body"`
-	SenderName string    `json:"senderName"`
-	CreatedAt  time.Time `json:"createdAt"`
+	ID             int64     `json:"id"`
+	Title          string    `json:"title"`
+	Body           string    `json:"body"`
+	SenderName     string    `json:"senderName"`
+	CreatedAt      time.Time `json:"createdAt"`
+	RecipientCount int       `json:"recipientCount"`
+	ReadCount      int       `json:"readCount"`
+	IsRead         bool      `json:"isRead"`
 }
 
 type Member struct {
 	UserID   int64  `json:"userId"`
 	Name     string `json:"name"`
+	PhotoURL string `json:"photoUrl,omitempty"`
 	Position string `json:"position"`
 	IsActive bool   `json:"isActive"`
 }
 
+type AttendancePoint struct {
+	EventID        int64     `json:"eventId"`
+	Title          string    `json:"title"`
+	StartsAt       time.Time `json:"startsAt"`
+	ConfirmedCount int       `json:"confirmedCount"`
+	MemberCount    int       `json:"memberCount"`
+	Rate           float64   `json:"rate"`
+}
+
 type Stats struct {
-	MemberCount       int     `json:"memberCount"`
-	ActiveMemberCount int     `json:"activeMemberCount"`
-	EventCount        int     `json:"eventCount"`
-	AttendanceRate    float64 `json:"attendanceRate"`
+	MemberCount        int               `json:"memberCount"`
+	ActiveMemberCount  int               `json:"activeMemberCount"`
+	EventCount         int               `json:"eventCount"`
+	UpcomingEventCount int               `json:"upcomingEventCount"`
+	AttendanceRate     float64           `json:"attendanceRate"`
+	AttendanceHistory  []AttendancePoint `json:"attendanceHistory"`
 }
 
 type Notification struct {
