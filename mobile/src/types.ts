@@ -14,6 +14,7 @@ export type Paranza = {
   id: number;
   name: string;
   description: string;
+  logoUrl?: string;
   primaryColor: string;
   secondaryColor: string;
   inviteCode?: string;
@@ -26,7 +27,7 @@ export type ParanzaOnboardingInput = {
   managerName: string;
   primaryColor: string;
   secondaryColor: string;
-  photoDataUrl?: string;
+  logoDataUrl?: string;
 };
 
 export type Me = {
