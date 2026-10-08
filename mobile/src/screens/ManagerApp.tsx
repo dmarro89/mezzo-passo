@@ -762,23 +762,87 @@ function ParticipantsView({
   );
 }
 
-function Members({ members }: { members: Member[] }) {
+function Members({
+  token,
+  members,
+  setMembers,
+  setStats,
+}: {
+  token?: string;
+  members: Member[];
+  setMembers: React.Dispatch<React.SetStateAction<Member[]>>;
+  setStats: React.Dispatch<React.SetStateAction<StatsData>>;
+}) {
   const [filter, setFilter] = useState<"all" | "active" | "inactive">("all");
-  const filtered = members.filter((member) =>
-    filter === "all"
-      ? true
-      : filter === "active"
-        ? member.isActive
-        : !member.isActive,
-  );
+  const [query, setQuery] = useState("");
+  const [memberError, setMemberError] = useState("");
+  const [updatingMember, setUpdatingMember] = useState<number>();
+
+  const filtered = members.filter((member) => {
+    const matchesStatus =
+      filter === "all"
+        ? true
+        : filter === "active"
+          ? member.isActive
+          : !member.isActive;
+    const normalized = query.trim().toLocaleLowerCase("it-IT");
+    const matchesQuery =
+      !normalized ||
+      member.name.toLocaleLowerCase("it-IT").includes(normalized) ||
+      member.position.toLocaleLowerCase("it-IT").includes(normalized);
+    return matchesStatus && matchesQuery;
+  });
+
+  async function toggleMember(member: Member) {
+    if (!token || updatingMember) {
+      return;
+    }
+    const nextActive = !member.isActive;
+    setUpdatingMember(member.userId);
+    setMemberError("");
+    try {
+      await api.setMemberActive(token, member.userId, nextActive);
+      setMembers((current) =>
+        current.map((item) =>
+          item.userId === member.userId
+            ? { ...item, isActive: nextActive }
+            : item,
+        ),
+      );
+      setStats((current) => ({
+        ...current,
+        activeMemberCount:
+          current.activeMemberCount + (nextActive ? 1 : -1),
+      }));
+    } catch (cause) {
+      setMemberError(
+        cause instanceof Error
+          ? cause.message
+          : "Non è stato possibile aggiornare il cullatore.",
+      );
+    } finally {
+      setUpdatingMember(undefined);
+    }
+  }
+
+  const activeCount = members.filter((member) => member.isActive).length;
+  const inactiveCount = members.length - activeCount;
 
   return (
     <Screen key="manager-members" withBottomNav>
       <PageHeader title="I miei cullatori" actionIcon="add" />
+
       <View style={styles.search}>
         <Ionicons name="search-outline" size={18} color={theme.colors.muted} />
-        <Text style={styles.searchPlaceholder}>Cerca un cullatore...</Text>
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Cerca un cullatore..."
+          placeholderTextColor={theme.colors.muted}
+          style={styles.searchInput}
+        />
       </View>
+
       <View style={styles.recipientRow}>
         <Pill
           label={"Tutti " + members.length}
@@ -786,28 +850,49 @@ function Members({ members }: { members: Member[] }) {
           onPress={() => setFilter("all")}
         />
         <Pill
-          label={"Attivi " + members.filter((member) => member.isActive).length}
+          label={"Attivi " + activeCount}
           active={filter === "active"}
           onPress={() => setFilter("active")}
         />
         <Pill
-          label={"Non attivi " + members.filter((member) => !member.isActive).length}
+          label={"Non attivi " + inactiveCount}
           active={filter === "inactive"}
           onPress={() => setFilter("inactive")}
         />
       </View>
 
-      {filtered.map((member) => (
-        <View key={member.userId} style={styles.personRow}>
-          <Avatar initials={initials(member.name)} size={44} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.personName}>{member.name}</Text>
-            <Text style={styles.personPosition}>{member.position}</Text>
+      {memberError ? <Text style={styles.errorText}>{memberError}</Text> : null}
+
+      {filtered.length ? (
+        filtered.map((member) => (
+          <View key={member.userId} style={styles.personRow}>
+            <Avatar
+              initials={initials(member.name)}
+              uri={member.photoUrl}
+              size={44}
+            />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.personName}>{member.name}</Text>
+              <Text style={styles.personPosition}>{member.position}</Text>
+            </View>
+            <Pill
+              label={
+                updatingMember === member.userId
+                  ? "..."
+                  : member.isActive
+                    ? "Attivo"
+                    : "Non attivo"
+              }
+              tone={member.isActive ? "success" : "default"}
+              onPress={() => void toggleMember(member)}
+            />
           </View>
-          <Pill label={member.isActive ? "Attivo" : "Non attivo"} tone={member.isActive ? "success" : "default"} />
-          <Ionicons name="ellipsis-horizontal" size={21} color={theme.colors.blue} />
-        </View>
-      ))}
+        ))
+      ) : (
+        <Card>
+          <Text style={styles.subtle}>Nessun cullatore trovato.</Text>
+        </Card>
+      )}
     </Screen>
   );
 }
