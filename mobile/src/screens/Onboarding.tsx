@@ -15,6 +15,7 @@ import { demoLogin, api } from "../api";
 import { WELCOME_IMAGE } from "../demo";
 import {
   Avatar,
+  Banner,
   Button,
   Card,
   Field,
@@ -314,14 +315,33 @@ export function Onboarding({
               Crea la tua paranza
             </Title>
 
-            <View style={styles.avatarBlock}>
-              <View style={styles.managerAvatarPlaceholder}>
-                <Ionicons name="person" size={44} color="#B9C7DD" />
-              </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Scegli immagine profilo"
+              onPress={pickManagerPhoto}
+              style={styles.avatarBlock}
+            >
+              {managerPhotoUri ? (
+                <Image
+                  source={{ uri: managerPhotoUri }}
+                  resizeMode="cover"
+                  style={styles.managerAvatarImage}
+                />
+              ) : (
+                <View style={styles.managerAvatarPlaceholder}>
+                  <Ionicons name="person" size={44} color="#B9C7DD" />
+                </View>
+              )}
               <View style={styles.cameraBadge}>
                 <Ionicons name="camera" size={17} color="#FFFFFF" />
               </View>
-            </View>
+            </Pressable>
+            <Pressable onPress={pickManagerPhoto} style={styles.photoAction}>
+              <Ionicons name="image-outline" size={17} color={theme.colors.blue} />
+              <Text style={styles.photoActionText}>
+                {managerPhotoUri ? "Cambia immagine" : "Scegli un’immagine"}
+              </Text>
+            </Pressable>
 
             <Field
               large
@@ -393,15 +413,37 @@ export function Onboarding({
               Scegli i colori della tua paranza
             </Title>
 
+            <View style={styles.colorSlotRow}>
+              <ColorSlot
+                label="Colore 1"
+                color={primaryColor}
+                active={activeColorSlot === 1}
+                onPress={() => setActiveColorSlot(1)}
+              />
+              <ColorSlot
+                label="Colore 2"
+                color={secondaryColor}
+                active={activeColorSlot === 2}
+                onPress={() => setActiveColorSlot(2)}
+              />
+            </View>
+
+            <Text style={styles.colorHelp}>
+              Tocca “Colore 1” o “Colore 2”, poi scegli dalla palette. Puoi anche
+              inserire qualsiasi colore tramite codice HEX.
+            </Text>
+
             <View style={styles.palette}>
               {PARANZA_COLORS.map((color) => {
-                const selected = selectedColors.includes(color);
+                const selected =
+                  primaryColor.toUpperCase() === color ||
+                  secondaryColor.toUpperCase() === color;
                 return (
                   <Pressable
                     key={color}
                     accessibilityRole="button"
                     accessibilityLabel={`Seleziona ${COLOR_NAMES[color] ?? color}`}
-                    onPress={() => toggleColor(color)}
+                    onPress={() => setPaletteColor(color)}
                     style={[
                       styles.colorCircle,
                       { backgroundColor: color },
@@ -420,18 +462,54 @@ export function Onboarding({
               })}
             </View>
 
+            <View style={styles.customColorRow}>
+              <View style={styles.customColorField}>
+                <Field
+                  label="Colore 1 · HEX"
+                  value={primaryColor}
+                  onChangeText={(value) => updateCustomColor(1, value)}
+                />
+              </View>
+              <View style={styles.customColorField}>
+                <Field
+                  label="Colore 2 · HEX"
+                  value={secondaryColor}
+                  onChangeText={(value) => updateCustomColor(2, value)}
+                />
+              </View>
+            </View>
+
             <Text style={styles.labelUpper}>Anteprima</Text>
-            <Banner name={paranzaName || "La tua paranza"} />
+            <ParanzaColorPreview
+              name={paranzaName || "La tua paranza"}
+              primaryColor={isValidHex(primaryColor) ? primaryColor : "#FFFFFF"}
+              secondaryColor={isValidHex(secondaryColor) ? secondaryColor : "#0A4DBA"}
+            />
+
             <Text style={styles.labelUpper}>Colori selezionati</Text>
             <View style={styles.selectedColors}>
-              {selectedColors.map((color) => (
-                <View key={color} style={styles.colorLabel}>
-                  <View style={[styles.swatch, { backgroundColor: color }]} />
-                  <Text style={styles.smallBody}>
-                    {COLOR_NAMES[color] ?? color}
-                  </Text>
-                </View>
-              ))}
+              <View style={styles.colorLabel}>
+                <View
+                  style={[
+                    styles.swatch,
+                    { backgroundColor: isValidHex(primaryColor) ? primaryColor : "#FFFFFF" },
+                  ]}
+                />
+                <Text style={styles.smallBody}>
+                  {COLOR_NAMES[primaryColor.toUpperCase()] ?? primaryColor}
+                </Text>
+              </View>
+              <View style={styles.colorLabel}>
+                <View
+                  style={[
+                    styles.swatch,
+                    { backgroundColor: isValidHex(secondaryColor) ? secondaryColor : "#0A4DBA" },
+                  ]}
+                />
+                <Text style={styles.smallBody}>
+                  {COLOR_NAMES[secondaryColor.toUpperCase()] ?? secondaryColor}
+                </Text>
+              </View>
             </View>
           </>
         ) : (
@@ -470,7 +548,13 @@ export function Onboarding({
         <View style={styles.pushBottom} />
         <Button
           large
-          disabled={saving || (role === "capoparanza" && selectedColors.length !== 2)}
+          disabled={
+            saving ||
+            (role === "capoparanza" &&
+              (!isValidHex(primaryColor) ||
+                !isValidHex(secondaryColor) ||
+                primaryColor.toUpperCase() === secondaryColor.toUpperCase()))
+          }
           title={
             saving
               ? "Salvataggio..."
