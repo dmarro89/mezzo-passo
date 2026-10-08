@@ -49,8 +49,8 @@ export function Screen({
       contentContainerStyle={[
         styles.scroll,
         withBottomNav && styles.scrollWithBottomNav,
-        footer && styles.scrollWithFooter,
-        footer && withBottomNav && styles.scrollWithNavAndFooter,
+        !!footer && styles.scrollWithFooter,
+        !!footer && withBottomNav && styles.scrollWithNavAndFooter,
       ]}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
@@ -62,8 +62,8 @@ export function Screen({
       style={[
         styles.scroll,
         withBottomNav && styles.scrollWithBottomNav,
-        footer && styles.scrollWithFooter,
-        footer && withBottomNav && styles.scrollWithNavAndFooter,
+        !!footer && styles.scrollWithFooter,
+        !!footer && withBottomNav && styles.scrollWithNavAndFooter,
       ]}
     >
       {children}
