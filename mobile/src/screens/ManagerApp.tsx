@@ -341,42 +341,89 @@ function Events({
   token,
   events,
   setEvents,
+  setStats,
   onOpenParticipants,
 }: {
   token?: string;
   events: EventItem[];
   setEvents: React.Dispatch<React.SetStateAction<EventItem[]>>;
+  setStats: React.Dispatch<React.SetStateAction<StatsData>>;
   onOpenParticipants: (event: EventItem) => void;
 }) {
+  const initialDate = useMemo(() => {
+    const value = new Date();
+    value.setDate(value.getDate() + 12);
+    return formatInputDate(value);
+  }, []);
+
   const [creating, setCreating] = useState(false);
   const [type, setType] = useState("Prova della paranza");
   const [title, setTitle] = useState("Prova della paranza");
+  const [date, setDate] = useState(initialDate);
+  const [startTime, setStartTime] = useState("20:00");
+  const [endTime, setEndTime] = useState("22:00");
   const [location, setLocation] = useState("Zona Duomo, Nola");
-  const [description, setDescription] = useState("Prova generale in vista della festa.");
+  const [description, setDescription] = useState("");
+  const [attire, setAttire] = useState("Maglia della paranza");
   const [required, setRequired] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [eventError, setEventError] = useState("");
 
   async function createEvent() {
-    if (!token) {
+    if (!token || saving) {
       return;
     }
-    const start = new Date();
-    start.setDate(start.getDate() + 12);
-    start.setHours(20, 0, 0, 0);
-    const end = new Date(start);
-    end.setHours(22, 0, 0, 0);
 
-    const created = await api.createEvent(token, {
-      type,
-      title,
-      description,
-      location,
-      startsAt: start.toISOString(),
-      endsAt: end.toISOString(),
-      required,
-      attire: "Maglia della paranza",
-    });
-    setEvents((current) => [created, ...current]);
-    setCreating(false);
+    setEventError("");
+    const start = parseLocalDateTime(date, startTime);
+    const end = parseLocalDateTime(date, endTime);
+    if (!title.trim() || !location.trim()) {
+      setEventError("Inserisci titolo e luogo dell’evento.");
+      return;
+    }
+    if (!start || !end) {
+      setEventError("Usa data DD/MM/YYYY e orari HH:MM.");
+      return;
+    }
+    if (end <= start) {
+      setEventError("L’orario di fine deve essere successivo a quello di inizio.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const created = await api.createEvent(token, {
+        type,
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+        startsAt: start.toISOString(),
+        endsAt: end.toISOString(),
+        required,
+        attire: attire.trim(),
+      });
+      setEvents((current) =>
+        [...current, created].sort(
+          (a, b) =>
+            new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime(),
+        ),
+      );
+      setStats((current) => ({
+        ...current,
+        eventCount: current.eventCount + 1,
+        upcomingEventCount:
+          current.upcomingEventCount + (start.getTime() >= Date.now() ? 1 : 0),
+      }));
+      setCreating(false);
+    } catch (cause) {
+      setEventError(
+        cause instanceof Error
+          ? cause.message
+          : "Non è stato possibile creare l’evento.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (creating) {
@@ -384,7 +431,14 @@ function Events({
       <Screen
         key="manager-create-event"
         withBottomNav
-        footer={<Button large title="Crea evento" onPress={createEvent} />}
+        footer={
+          <Button
+            large
+            disabled={saving}
+            title={saving ? "Creazione..." : "Crea evento"}
+            onPress={createEvent}
+          />
+        }
       >
         <PageHeader title="Nuovo evento" onBack={() => setCreating(false)} />
 
@@ -406,7 +460,12 @@ function Events({
                   size={21}
                   color={selected ? theme.colors.blue : theme.colors.blueDark}
                 />
-                <Text style={[styles.eventTypeText, selected && { color: theme.colors.blue }]}>
+                <Text
+                  style={[
+                    styles.eventTypeText,
+                    selected && { color: theme.colors.blue },
+                  ]}
+                >
                   {item.label}
                 </Text>
               </Pressable>
@@ -415,12 +474,51 @@ function Events({
         </View>
 
         <Text style={styles.blockLabel}>Dettagli evento</Text>
+        <Field label="Titolo" value={title} onChangeText={setTitle} />
         <View style={styles.detailPair}>
-          <DetailBox icon="calendar-outline" label="Data" value="20 Luglio 2024" />
-          <DetailBox icon="time-outline" label="Orario" value="20:00 - 22:00" />
+          <View style={styles.formHalf}>
+            <Field
+              label="Data"
+              value={date}
+              placeholder="GG/MM/AAAA"
+              icon="calendar-outline"
+              onChangeText={setDate}
+            />
+          </View>
+          <View style={styles.formHalf}>
+            <Field
+              label="Inizio"
+              value={startTime}
+              placeholder="20:00"
+              icon="time-outline"
+              onChangeText={setStartTime}
+            />
+          </View>
         </View>
-        <DetailBox icon="location-outline" label="Luogo" value={location} />
-
+        <View style={styles.detailPair}>
+          <View style={styles.formHalf}>
+            <Field
+              label="Fine"
+              value={endTime}
+              placeholder="22:00"
+              icon="time-outline"
+              onChangeText={setEndTime}
+            />
+          </View>
+          <View style={styles.formHalf}>
+            <Field
+              label="Luogo"
+              value={location}
+              icon="location-outline"
+              onChangeText={setLocation}
+            />
+          </View>
+        </View>
+        <Field
+          label="Abbigliamento (opzionale)"
+          value={attire}
+          onChangeText={setAttire}
+        />
         <Field
           label="Descrizione (opzionale)"
           value={description}
@@ -429,7 +527,9 @@ function Events({
         />
 
         <View style={styles.confirmRow}>
-          <Text style={styles.confirmLabel}>Richiedi conferma di partecipazione</Text>
+          <Text style={styles.confirmLabel}>
+            Richiedi conferma di partecipazione
+          </Text>
           <Switch
             value={required}
             onValueChange={setRequired}
@@ -438,7 +538,7 @@ function Events({
           />
         </View>
 
-
+        {eventError ? <Text style={styles.errorText}>{eventError}</Text> : null}
       </Screen>
     );
   }
@@ -449,13 +549,20 @@ function Events({
         <Title>Eventi</Title>
         <HeaderButton icon="add" onPress={() => setCreating(true)} />
       </View>
-      {events.map((event) => (
-        <Pressable key={event.id} onPress={() => onOpenParticipants(event)}>
-          <Card>
-            <EventRow event={event} />
-          </Card>
-        </Pressable>
-      ))}
+
+      {events.length ? (
+        events.map((event) => (
+          <Pressable key={event.id} onPress={() => onOpenParticipants(event)}>
+            <Card>
+              <EventRow event={event} />
+            </Card>
+          </Pressable>
+        ))
+      ) : (
+        <Card>
+          <Text style={styles.subtle}>Nessun evento creato.</Text>
+        </Card>
+      )}
     </Screen>
   );
 }
