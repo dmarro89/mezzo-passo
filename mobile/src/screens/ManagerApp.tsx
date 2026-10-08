@@ -440,9 +440,13 @@ function Events({
 }
 
 function Messages({
+  token,
+  memberCount,
   messages,
   setMessages,
 }: {
+  token?: string;
+  memberCount: number;
   messages: MessageItem[];
   setMessages: React.Dispatch<React.SetStateAction<MessageItem[]>>;
 }) {
@@ -452,17 +456,12 @@ function Messages({
     "Ragazzi,\nci vediamo sabato alle 20:00 in Zona Duomo per la prova della paranza.\n\nÈ importante la presenza di tutti.\nForza Orgoglio Nolano!",
   );
 
-  function sendMessage() {
-    setMessages((current) => [
-      {
-        id: Date.now(),
-        title: subject,
-        body,
-        senderName: "Luca Iorio",
-        createdAt: new Date().toISOString(),
-      },
-      ...current,
-    ]);
+  async function sendMessage() {
+    if (!token) {
+      return;
+    }
+    const created = await api.createMessage(token, subject, body);
+    setMessages((current) => [created, ...current]);
     setComposing(false);
   }
 
@@ -476,7 +475,7 @@ function Messages({
         <PageHeader title="Nuovo messaggio" onBack={() => setComposing(false)} />
         <Text style={styles.blockLabel}>Destinatari</Text>
         <View style={styles.recipientRow}>
-          <Pill label="Tutti i cullatori (32 membri)" active />
+          <Pill label={"Tutti i cullatori (" + memberCount + " membri)"} active />
           <Pill label="Seleziona cullatori" />
         </View>
         <Field label="Oggetto" value={subject} onChangeText={setSubject} />
