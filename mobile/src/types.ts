@@ -26,6 +26,7 @@ export type ParanzaOnboardingInput = {
   managerName: string;
   primaryColor: string;
   secondaryColor: string;
+  photoDataUrl?: string;
 };
 
 export type Me = {
