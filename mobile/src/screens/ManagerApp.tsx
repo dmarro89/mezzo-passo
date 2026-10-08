@@ -8,7 +8,7 @@ import {
   demoParticipants,
   demoStats,
 } from "../demo";
-import { EventItem, MessageItem, Participant } from "../types";
+import { EventItem, MessageItem, Paranza, Participant } from "../types";
 import {
   Avatar,
   Banner,
@@ -47,7 +47,13 @@ const eventTypes = [
   { label: "Domenica della festa", icon: "sunny-outline" },
 ] as const;
 
-export function ManagerApp({ onLogout }: { onLogout: () => void }) {
+export function ManagerApp({
+  paranza,
+  onLogout,
+}: {
+  paranza?: Paranza;
+  onLogout: () => void;
+}) {
   const [tab, setTab] = useState<Tab>("home");
   const [events, setEvents] = useState<EventItem[]>(demoEvents);
   const [messages, setMessages] = useState<MessageItem[]>(demoMessages);
@@ -63,7 +69,13 @@ export function ManagerApp({ onLogout }: { onLogout: () => void }) {
         />
       ) : (
         <>
-          {tab === "home" && <Home events={events} onOpenEvent={setSelectedEvent} />}
+          {tab === "home" && (
+            <Home
+              events={events}
+              paranza={paranza}
+              onOpenEvent={setSelectedEvent}
+            />
+          )}
           {tab === "events" && (
             <Events
               events={events}
@@ -89,9 +101,11 @@ export function ManagerApp({ onLogout }: { onLogout: () => void }) {
 
 function Home({
   events,
+  paranza,
   onOpenEvent,
 }: {
   events: EventItem[];
+  paranza?: Paranza;
   onOpenEvent: (event: EventItem) => void;
 }) {
   const next = events[0];
@@ -103,11 +117,15 @@ function Home({
         <HeaderButton icon="settings-outline" />
       </View>
 
-      <Banner />
+      <Banner name={paranza?.name ?? "Orgoglio Nolano"} />
 
       <View>
-        <Text style={styles.hello}>Ciao Luca</Text>
-        <Text style={styles.subtle}>Capoparanza di Orgoglio Nolano</Text>
+        <Text style={styles.hello}>
+          Ciao {paranza?.managerName?.split(" ")[0] ?? "Luca"}
+        </Text>
+        <Text style={styles.subtle}>
+          Capoparanza di {paranza?.name ?? "Orgoglio Nolano"}
+        </Text>
       </View>
 
       <View style={styles.metricRows}>
