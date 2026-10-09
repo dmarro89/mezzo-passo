@@ -1,21 +1,21 @@
 import { Platform } from "react-native";
 
 /**
- * Mezzo Passo pairs an editorial display serif (the heritage of the Gigli)
- * with clean native sans-serif for navigation and reading.
- * No remote font request or external assets are required.
+ * Mezzo Passo: contemporary sans-serif typography.
+ * Strong, compact headlines with legible native UI text.
+ * Uses preinstalled fonts, so the app works offline without font loading.
  */
 export const typography = {
   display: Platform.select({
-    ios: "Georgia-Bold",
-    android: "serif",
-    default: "Georgia, serif",
-  }) ?? "serif",
+    ios: "AvenirNext-Heavy",
+    android: "sans-serif",
+    default: "system-ui",
+  }) ?? "System",
   heading: Platform.select({
-    ios: "Georgia-Bold",
-    android: "serif",
-    default: "Georgia, serif",
-  }) ?? "serif",
+    ios: "AvenirNext-DemiBold",
+    android: "sans-serif",
+    default: "system-ui",
+  }) ?? "System",
   body: Platform.select({
     ios: "AvenirNext-Regular",
     android: "sans-serif",
