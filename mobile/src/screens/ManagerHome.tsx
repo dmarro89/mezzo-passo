@@ -625,7 +625,7 @@ const s = StyleSheet.create({
   },
   shortcutText: {
     color: navy, fontSize: 13, lineHeight: 17,
-    fontFamily: typography.heading, fontWeight: "800", flexShrink: 1,
+    fontFamily: typography.body, fontWeight: "800", flexShrink: 1,
   },
   overviewSection: { gap: 7 },
   overviewHeading: {
