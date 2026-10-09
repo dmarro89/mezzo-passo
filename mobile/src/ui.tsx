@@ -867,7 +867,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     color: "#8999AE",
-    fontFamily: typography.heading,
+    fontFamily: typography.body,
     fontSize: 11,
     lineHeight: 16,
     fontWeight: "700",
