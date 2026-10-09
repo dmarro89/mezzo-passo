@@ -57,24 +57,24 @@ await shot("05-manager-success");
 await page.getByText("Vai alla tua paranza", { exact: true }).click();
 await shot("06-manager-home");
 
-await page.getByRole("button", { name: "Eventi" }).click();
+await page.getByRole("button", { name: "Eventi" }).last().click();
 await shot("07-manager-events");
 await page.getByRole("button", { name: "add" }).click();
 await shot("08-manager-create-event");
 await page.getByRole("button", { name: "chevron-back" }).click();
 
-await page.getByRole("button", { name: "Messaggi" }).click();
+await page.getByRole("button", { name: "Messaggi" }).last().click();
 await shot("09-manager-messages");
 await page.getByText("Nuovo messaggio", { exact: true }).click();
 await shot("10-manager-new-message");
 await page.getByRole("button", { name: "chevron-back" }).click();
 
-await page.getByRole("button", { name: "Eventi" }).click();
+await page.getByRole("button", { name: "Eventi" }).last().click();
 await page.getByText("Prova della paranza", { exact: true }).first().click();
 await shot("11-manager-participants");
 await page.getByRole("button", { name: "chevron-back" }).click();
 
-await page.getByRole("button", { name: "Cullatori" }).click();
+await page.getByRole("button", { name: "Cullatori" }).last().click();
 await shot("12-manager-members");
 await page.getByRole("button", { name: "Altro" }).click();
 await shot("13-manager-stats");
@@ -91,13 +91,13 @@ await shot("16-cullatore-success");
 await page.getByText("Entra nell’app", { exact: true }).click();
 await shot("17-cullatore-home");
 
-await page.getByRole("button", { name: "Eventi" }).click();
+await page.getByRole("button", { name: "Eventi" }).last().click();
 await shot("18-cullatore-events");
 await page.getByText("Prova della paranza", { exact: true }).first().click();
 await shot("19-cullatore-event-detail");
 await page.getByRole("button", { name: "chevron-back" }).click();
 
-await page.getByRole("button", { name: "Messaggi" }).click();
+await page.getByRole("button", { name: "Messaggi" }).last().click();
 await shot("20-cullatore-messages");
 await page.getByRole("button", { name: "Calendario" }).click();
 await shot("21-cullatore-calendar");
