@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Image,
   Pressable,
   StyleSheet,
   Switch,
@@ -10,6 +9,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { api, demoLogin } from "../api";
+import { ManagerHome } from "./ManagerHome";
 import {
   EventItem,
   Me,
@@ -26,7 +26,6 @@ import {
   Card,
   Field,
   HeaderButton,
-  Metric,
   Pill,
   Screen,
   SectionTitle,
@@ -153,7 +152,7 @@ export function ManagerApp({
       ) : (
         <>
           {tab === "home" && (
-            <Home
+            <ManagerHome
               me={me}
               events={events}
               paranza={paranza}
@@ -162,6 +161,7 @@ export function ManagerApp({
               error={loadError}
               onRetry={loadData}
               onOpenEvent={openParticipants}
+              onNavigate={setTab}
             />
           )}
           {tab === "events" && (
@@ -203,138 +203,6 @@ export function ManagerApp({
           />
         </>
       )}
-    </View>
-  );
-}
-
-function Home({
-  me,
-  events,
-  paranza,
-  stats,
-  loading,
-  error,
-  onRetry,
-  onOpenEvent,
-}: {
-  me?: Me;
-  events: EventItem[];
-  paranza?: Paranza;
-  stats: StatsData;
-  loading: boolean;
-  error: string;
-  onRetry: () => void;
-  onOpenEvent: (event: EventItem) => void;
-}) {
-  const next = events.find(
-    (event) => new Date(event.startsAt).getTime() >= Date.now(),
-  );
-  const attendance = Math.round(stats.attendanceRate);
-
-  return (
-    <Screen key="manager-home" withBottomNav>
-      <View style={styles.homeHeader}>
-        <View style={{ flex: 1 }} />
-        <HeaderButton icon="settings-outline" />
-      </View>
-
-      <ParanzaHero paranza={paranza} />
-
-      <View>
-        <Text style={styles.hello}>
-          Ciao {me?.user.firstName ?? paranza?.managerName?.split(" ")[0] ?? "Luca"}
-        </Text>
-        <Text style={styles.subtle}>
-          Capoparanza della paranza {paranza?.name ?? "—"}
-        </Text>
-      </View>
-
-      {error ? (
-        <Card>
-          <Text style={styles.errorText}>{error}</Text>
-          <Button title="Riprova" variant="secondary" onPress={onRetry} />
-        </Card>
-      ) : null}
-
-      <View style={styles.metricRows}>
-        <View style={styles.metricRow}>
-          <Metric
-            label="Cullatori"
-            value={loading ? "—" : stats.memberCount}
-            icon="people-outline"
-          />
-          <Metric
-            label="Cullatori attivi"
-            value={loading ? "—" : stats.activeMemberCount}
-            icon="person-outline"
-          />
-        </View>
-        <View style={styles.metricRow}>
-          <Metric
-            label="Eventi"
-            value={loading ? "—" : stats.eventCount}
-            icon="calendar-outline"
-          />
-          <Metric
-            label="Presenza media"
-            value={loading ? "—" : attendance + "%"}
-            ring
-          />
-        </View>
-      </View>
-
-      <SectionTitle action="Vedi tutti">Prossimi eventi</SectionTitle>
-      {loading ? (
-        <Card>
-          <Text style={styles.subtle}>Caricamento eventi...</Text>
-        </Card>
-      ) : next ? (
-        <Pressable onPress={() => onOpenEvent(next)}>
-          <Card>
-            <EventRow event={next} />
-          </Card>
-        </Pressable>
-      ) : (
-        <Card>
-          <Text style={styles.subtle}>Nessun evento in programma.</Text>
-        </Card>
-      )}
-    </Screen>
-  );
-}
-
-function ParanzaHero({ paranza }: { paranza?: Paranza }) {
-  const primary = paranza?.primaryColor || "#FFFFFF";
-  const secondary = paranza?.secondaryColor || theme.colors.blue;
-  const textColor = contrastText(primary);
-
-  return (
-    <View style={[styles.paranzaHero, { backgroundColor: primary }]}>
-      <View style={[styles.paranzaHeroBand, { backgroundColor: secondary }]} />
-      <View style={styles.paranzaLogoWrap}>
-        {paranza?.logoUrl ? (
-          <Image
-            source={{ uri: paranza.logoUrl }}
-            resizeMode="contain"
-            style={styles.paranzaLogoImage}
-          />
-        ) : (
-          <Ionicons name="flag-outline" size={34} color={theme.colors.blue} />
-        )}
-      </View>
-      <View style={styles.paranzaHeroCopy}>
-        <Text style={[styles.paranzaHeroEyebrow, { color: textColor }]}>
-          LA TUA PARANZA
-        </Text>
-        <Text
-          style={[styles.paranzaHeroName, { color: textColor }]}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.65}
-        >
-          {paranza?.name ?? "Paranza"}
-        </Text>
-      </View>
     </View>
   );
 }
