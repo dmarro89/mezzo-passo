@@ -1,5 +1,6 @@
 import React, { ReactNode, useEffect, useRef } from "react";
 import {
+  AccessibilityInfo,
   Animated,
   Image,
   ImageBackground,
@@ -401,13 +402,31 @@ function BottomNavTab({
   const selectedProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
 
   useEffect(() => {
-    const animation = Animated.timing(selectedProgress, {
-      toValue: selected ? 1 : 0,
-      duration: 180,
-      useNativeDriver: true,
-    });
-    animation.start();
-    return () => animation.stop();
+    let mounted = true;
+    let animation: Animated.CompositeAnimation | undefined;
+
+    const update = (reduceMotion: boolean) => {
+      if (!mounted) return;
+      if (reduceMotion) {
+        selectedProgress.setValue(selected ? 1 : 0);
+      } else {
+        animation = Animated.timing(selectedProgress, {
+          toValue: selected ? 1 : 0,
+          duration: 180,
+          useNativeDriver: true,
+        });
+        animation.start();
+      }
+    };
+
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then(update)
+      .catch(() => update(false));
+
+    return () => {
+      mounted = false;
+      animation?.stop();
+    };
   }, [selected, selectedProgress]);
 
   const bubbleScale = selectedProgress.interpolate({
