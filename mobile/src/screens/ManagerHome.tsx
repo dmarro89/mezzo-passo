@@ -202,8 +202,8 @@ function ParanzaIdentity({ paranza }: { paranza?: Paranza }) {
   const secondary = paranza?.secondaryColor || blue;
   return (
     <View style={s.hero}>
-      <View pointerEvents="none" style={s.orbitLarge} />
-      <View pointerEvents="none" style={s.orbitSmall} />
+      <View pointerEvents="none" style={[s.heroStripeWide, { backgroundColor: primary }]} />
+      <View pointerEvents="none" style={[s.heroStripeNarrow, { backgroundColor: secondary }]} />
       <View style={s.heroMain}>
         <View style={s.heroLogo}>
           {paranza?.logoUrl ? (
@@ -366,13 +366,15 @@ const s = StyleSheet.create({
     paddingHorizontal: 21, paddingTop: 22, paddingBottom: 17,
     overflow: "hidden", minHeight: 169, gap: 18,
   },
-  orbitLarge: {
-    position: "absolute", top: -75, right: -60, width: 235, height: 235,
-    borderRadius: 120, borderWidth: 1, borderColor: "rgba(255,255,255,0.10)",
+  heroStripeWide: {
+    position: "absolute", top: -50, right: -26,
+    width: 69, height: 260, opacity: 0.15,
+    transform: [{ rotate: "-22deg" }],
   },
-  orbitSmall: {
-    position: "absolute", right: -8, bottom: -90, width: 180, height: 180,
-    borderRadius: 90, borderWidth: 1, borderColor: "rgba(255,255,255,0.07)",
+  heroStripeNarrow: {
+    position: "absolute", top: -35, right: 61,
+    width: 28, height: 250, opacity: 0.19,
+    transform: [{ rotate: "-22deg" }],
   },
   heroMain: { flexDirection: "row", alignItems: "center", gap: 16 },
   heroLogo: {
