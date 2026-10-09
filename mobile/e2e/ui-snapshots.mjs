@@ -57,6 +57,15 @@ await shot("05-manager-success");
 await page.getByText("Vai alla tua paranza", { exact: true }).click();
 await shot("06-manager-home");
 
+// Keep responsive screenshots of the same real Home and exercise its stats link.
+await page.setViewportSize({ width: 320, height: 700 });
+await shot("06a-manager-home-small");
+await page.setViewportSize({ width: 430, height: 932 });
+await shot("06b-manager-home-large");
+await page.setViewportSize({ width: 390, height: 844 });
+await page.getByRole("button", { name: "Apri statistiche" }).click();
+await page.getByRole("button", { name: "Home" }).click();
+
 await page.getByRole("button", { name: "Eventi" }).last().click();
 await shot("07-manager-events");
 await page.getByRole("button", { name: "add" }).click();
