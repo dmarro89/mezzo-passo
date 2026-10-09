@@ -14,6 +14,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { BANNER_IMAGE, PERSON_IMAGE } from "./demo";
 import { theme } from "./theme";
+import { typography } from "./typography";
 
 export function Screen({
   children,
@@ -356,46 +357,93 @@ export function Banner({
   );
 }
 
+type NavItem = {
+  key: string;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+  iconActive?: React.ComponentProps<typeof Ionicons>["name"];
+};
+
 export function BottomNav({
   items,
   active,
   onChange,
 }: {
-  items: {
-    key: string;
-    label: string;
-    icon: React.ComponentProps<typeof Ionicons>["name"];
-    iconActive?: React.ComponentProps<typeof Ionicons>["name"];
-  }[];
+  items: NavItem[];
   active: string;
   onChange: (key: string) => void;
 }) {
   return (
     <View style={styles.navSafe}>
       <View style={styles.nav}>
-        {items.map((item) => {
-          const selected = item.key === active;
-          return (
-            <Pressable
-              key={item.key}
-              accessibilityRole="button"
-              accessibilityLabel={item.label}
-              onPress={() => onChange(item.key)}
-              style={({ pressed }) => [styles.navItem, pressed && { opacity: 0.62 }]}
-            >
-              <Ionicons
-                name={selected ? item.iconActive ?? item.icon : item.icon}
-                size={21}
-                color={selected ? theme.colors.blue : theme.colors.muted}
-              />
-              <Text style={[styles.navLabel, selected && styles.navLabelActive]}>
-                {item.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+        {items.map((item) => (
+          <BottomNavTab
+            key={item.key}
+            item={item}
+            selected={item.key === active}
+            onPress={() => onChange(item.key)}
+          />
+        ))}
       </View>
     </View>
+  );
+}
+
+function BottomNavTab({
+  item,
+  selected,
+  onPress,
+}: {
+  item: NavItem;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const selectedProgress = useRef(new Animated.Value(selected ? 1 : 0)).current;
+
+  useEffect(() => {
+    const animation = Animated.timing(selectedProgress, {
+      toValue: selected ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    });
+    animation.start();
+    return () => animation.stop();
+  }, [selected, selectedProgress]);
+
+  const bubbleScale = selectedProgress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.88, 1],
+  });
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.label}
+      accessibilityState={{ selected }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.navItem, pressed && { opacity: 0.72 }]}
+    >
+      <View style={styles.navIconShell}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.navIconHighlight,
+            {
+              opacity: selectedProgress,
+              transform: [{ scale: bubbleScale }],
+            },
+          ]}
+        />
+        <Ionicons
+          name={selected ? item.iconActive ?? item.icon : item.icon}
+          size={21}
+          color={selected ? theme.colors.blue : theme.colors.muted}
+        />
+      </View>
+      <Text style={[styles.navLabel, selected && styles.navLabelActive]}>
+        {item.label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -764,15 +812,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: "#FFFFFF",
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: theme.colors.line,
+    borderTopColor: "#DDE7F5",
+    shadowColor: theme.colors.blueDeep,
+    shadowOpacity: 0.045,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 6,
   },
   nav: {
     height: 74,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-around",
-    paddingHorizontal: 4,
-    paddingTop: 8,
+    paddingHorizontal: 5,
+    paddingTop: 7,
     paddingBottom: 4,
   },
   navItem: {
@@ -780,16 +833,29 @@ const styles = StyleSheet.create({
     height: 62,
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 2,
+  },
+  navIconShell: {
+    width: 46,
+    height: 35,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navIconHighlight: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "#E8F0FF",
+    borderRadius: 12,
   },
   navLabel: {
-    color: theme.colors.muted,
+    color: "#8999AE",
+    fontFamily: typography.heading,
     fontSize: 11,
-    lineHeight: 14,
+    lineHeight: 16,
     fontWeight: "700",
+    letterSpacing: 0.05,
   },
   navLabelActive: {
-    color: theme.colors.blue,
+    color: theme.colors.blueDark,
     fontWeight: "800",
   },
   avatar: {
