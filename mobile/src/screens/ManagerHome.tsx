@@ -1,8 +1,20 @@
 import React from "react";
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  AccessibilityInfo,
+  ActivityIndicator,
+  Animated,
+  Image,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  Text,
+  View,
+  ViewStyle,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Screen } from "../ui";
 import { theme } from "../theme";
+import { typography } from "../typography";
 import { EventItem, Me, Paranza, Stats } from "../types";
 
 type Destination = "events" | "messages" | "members" | "stats";
@@ -172,11 +184,10 @@ function StatsOverview({
           <Ionicons name="arrow-forward" size={14} color={blue} />
         </Pressable>
       </View>
-      <Pressable
-        accessibilityRole="button"
+      <TactilePressable
         accessibilityLabel="Apri le statistiche della paranza"
         onPress={onPress}
-        style={({ pressed }) => [s.overviewCard, pressed && s.pressed]}
+        style={s.overviewCard}
       >
         <View style={s.overviewAttendance}>
           <Text style={s.overviewAttendanceLabel}>PRESENZA MEDIA</Text>
@@ -204,7 +215,7 @@ function StatsOverview({
             icon="calendar-clear-outline"
           />
         </View>
-      </Pressable>
+      </TactilePressable>
     </View>
   );
 }
@@ -240,17 +251,11 @@ function ParanzaIdentity({ paranza }: { paranza?: Paranza }) {
       <View pointerEvents="none" style={[s.heroStripeWide, { backgroundColor: primary }]} />
       <View pointerEvents="none" style={[s.heroStripeNarrow, { backgroundColor: secondary }]} />
       <View style={s.heroMain}>
-        <View style={s.heroLogo}>
-          {paranza?.logoUrl ? (
-            <Image
-              source={{ uri: paranza.logoUrl }}
-              style={s.heroLogoImage}
-              resizeMode="contain"
-            />
-          ) : (
-            <Ionicons name="flag-outline" size={34} color={blue} />
-          )}
-        </View>
+        <ParanzaMark
+          logoUrl={paranza?.logoUrl}
+          primaryColor={primary}
+          secondaryColor={secondary}
+        />
         <View style={s.heroText}>
           <Text style={s.heroEyebrow}>LA TUA PARANZA</Text>
           <Text
@@ -281,6 +286,41 @@ function ParanzaIdentity({ paranza }: { paranza?: Paranza }) {
   );
 }
 
+function ParanzaMark({
+  logoUrl,
+  primaryColor,
+  secondaryColor,
+}: {
+  logoUrl?: string;
+  primaryColor: string;
+  secondaryColor: string;
+}) {
+  const [imageFailed, setImageFailed] = React.useState(false);
+
+  React.useEffect(() => {
+    setImageFailed(false);
+  }, [logoUrl]);
+
+  return (
+    <View style={[s.heroLogoFrame, { borderColor: secondaryColor }]}>
+      <View style={[s.heroLogoAccent, { backgroundColor: primaryColor }]} />
+      <View style={s.heroLogo}>
+        {logoUrl && !imageFailed ? (
+          <Image
+            accessibilityLabel="Logo della paranza"
+            source={{ uri: logoUrl }}
+            style={s.heroLogoImage}
+            resizeMode="contain"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <Ionicons name="flag-outline" size={30} color={blue} />
+        )}
+      </View>
+    </View>
+  );
+}
+
 function UpcomingEvent({ event, onPress }: { event: EventItem; onPress: () => void }) {
   const start = new Date(event.startsAt);
   const end = new Date(event.endsAt);
@@ -291,11 +331,10 @@ function UpcomingEvent({ event, onPress }: { event: EventItem; onPress: () => vo
   const time = (date: Date) =>
     date.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
   return (
-    <Pressable
-      accessibilityRole="button"
+    <TactilePressable
       accessibilityLabel={"Apri partecipazioni: " + event.title}
       onPress={onPress}
-      style={({ pressed }) => [s.eventCard, pressed && s.pressed]}
+      style={s.eventCard}
     >
       <View style={s.eventMain}>
         <View style={s.eventDate}>
@@ -332,7 +371,7 @@ function UpcomingEvent({ event, onPress }: { event: EventItem; onPress: () => vo
           <Ionicons name="arrow-forward" size={16} color={blue} />
         </View>
       </View>
-    </Pressable>
+    </TactilePressable>
   );
 }
 
@@ -344,23 +383,75 @@ function Shortcut({
   onPress: () => void;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
+    <TactilePressable
       accessibilityLabel={title}
       onPress={onPress}
-      style={({ pressed }) => [s.shortcut, pressed && s.pressed]}
+      style={s.shortcut}
+      fluid
     >
       <View style={s.shortcutIcon}>
         <Ionicons name={icon} size={23} color={blue} />
       </View>
       <Text style={s.shortcutText}>{title}</Text>
       <Ionicons name="arrow-forward" size={14} color="#91A4BF" />
-    </Pressable>
+    </TactilePressable>
   );
 }
 
 
+function TactilePressable({
+  children,
+  style,
+  onPress,
+  accessibilityLabel,
+  fluid = false,
+}: {
+  children: React.ReactNode;
+  style: StyleProp<ViewStyle>;
+  onPress: () => void;
+  accessibilityLabel: string;
+  fluid?: boolean;
+}) {
+  const scale = React.useRef(new Animated.Value(1)).current;
+  const reduceMotion = React.useRef(false);
+  React.useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      if (mounted) reduceMotion.current = reduced;
+    }).catch(() => {});
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const animate = (toValue: number) => {
+    if (reduceMotion.current) return;
+    Animated.spring(scale, {
+      toValue,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 1,
+    }).start();
+  };
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      onPressIn={() => animate(0.975)}
+      onPressOut={() => animate(1)}
+      style={fluid ? s.tactileFluid : undefined}
+    >
+      <Animated.View style={[style, { transform: [{ scale }] }]}>
+        {children}
+      </Animated.View>
+    </Pressable>
+  );
+}
+
 const s = StyleSheet.create({
+  tactileFluid: { flex: 1, minWidth: 0 },
   homeStack: { gap: 14, paddingBottom: 4 },
   header: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,
@@ -372,10 +463,13 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 2.1,
   },
   greeting: {
-    color: navy, fontSize: 30, lineHeight: 35,
-    fontWeight: "900", letterSpacing: -1.15,
+    color: navy, fontSize: 30, lineHeight: 36,
+    fontFamily: typography.display, fontWeight: "800", letterSpacing: -0.8,
   },
-  headerSubtitle: { color: subdued, fontSize: 13, lineHeight: 18, fontWeight: "500" },
+  headerSubtitle: {
+    color: subdued, fontSize: 13, lineHeight: 19,
+    fontFamily: typography.body, fontWeight: "500",
+  },
   refresh: {
     marginTop: 7, height: 44, width: 44, borderRadius: 14,
     backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E6EDF7",
@@ -398,9 +492,26 @@ const s = StyleSheet.create({
     transform: [{ rotate: "-22deg" }],
   },
   heroMain: { flexDirection: "row", alignItems: "center", gap: 14 },
+  heroLogoFrame: {
+    width: 74,
+    height: 74,
+    borderRadius: 19,
+    borderWidth: 2,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroLogoAccent: {
+    position: "absolute",
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    opacity: 0.35,
+    transform: [{ rotate: "12deg" }],
+  },
   heroLogo: {
-    width: 67, height: 67, borderRadius: 16,
-    backgroundColor: "#FFFFFF", borderWidth: 3, borderColor: "#FFFFFF",
+    width: 64, height: 64, borderRadius: 15,
+    backgroundColor: "#FFFFFF", padding: 4,
     overflow: "hidden", alignItems: "center", justifyContent: "center",
   },
   heroLogoImage: { width: "100%", height: "100%" },
@@ -410,8 +521,8 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 2.1,
   },
   heroName: {
-    color: "#FFFFFF", fontSize: 24, lineHeight: 29,
-    fontWeight: "900", letterSpacing: -0.65,
+    color: "#FFFFFF", fontSize: 24, lineHeight: 30,
+    fontFamily: typography.display, fontWeight: "800", letterSpacing: -0.6,
   },
   heroFooter: { gap: 10 },
   heroRule: { height: StyleSheet.hairlineWidth, backgroundColor: "rgba(255,255,255,0.23)" },
@@ -442,8 +553,8 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 1.7, marginBottom: 2,
   },
   sectionTitle: {
-    color: navy, fontSize: 20, lineHeight: 25,
-    fontWeight: "900", letterSpacing: -0.55,
+    color: navy, fontSize: 20, lineHeight: 26,
+    fontFamily: typography.heading, fontWeight: "800", letterSpacing: -0.4,
   },
   inlineLink: {
     flexDirection: "row", alignItems: "center", gap: 4,
@@ -467,8 +578,8 @@ const s = StyleSheet.create({
     color: blue, fontSize: 10, fontWeight: "900", letterSpacing: 1.2,
   },
   eventDay: {
-    color: navy, fontSize: 33, lineHeight: 36,
-    fontWeight: "900", letterSpacing: -1,
+    color: navy, fontSize: 33, lineHeight: 37,
+    fontFamily: typography.display, fontWeight: "800", letterSpacing: -0.8,
   },
   eventMonth: { color: blue, fontSize: 11, fontWeight: "900", letterSpacing: 1 },
   eventBody: { flex: 1, gap: 6 },
@@ -477,8 +588,8 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 1.2,
   },
   eventName: {
-    color: navy, fontSize: 18, lineHeight: 22,
-    fontWeight: "900", letterSpacing: -0.25,
+    color: navy, fontSize: 18, lineHeight: 23,
+    fontFamily: typography.heading, fontWeight: "800", letterSpacing: -0.15,
   },
   eventMetaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   eventMeta: { color: subdued, fontSize: 13, lineHeight: 18, flex: 1 },
@@ -514,7 +625,7 @@ const s = StyleSheet.create({
   },
   shortcutText: {
     color: navy, fontSize: 13, lineHeight: 17,
-    fontWeight: "900", flexShrink: 1,
+    fontFamily: typography.heading, fontWeight: "800", flexShrink: 1,
   },
   overviewSection: { gap: 7 },
   overviewHeading: {
@@ -539,8 +650,8 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 0.8,
   },
   overviewAttendanceValue: {
-    color: "#FFFFFF", fontSize: 32, lineHeight: 38,
-    fontWeight: "900", letterSpacing: -1.25,
+    color: "#FFFFFF", fontSize: 32, lineHeight: 39,
+    fontFamily: typography.display, fontWeight: "800", letterSpacing: -0.9,
   },
   overviewAttendanceNote: {
     color: "#DBE9FF", fontSize: 10, lineHeight: 13,
@@ -557,8 +668,8 @@ const s = StyleSheet.create({
     justifyContent: "center", gap: 5, paddingHorizontal: 1,
   },
   miniStatValue: {
-    color: navy, fontSize: 24, lineHeight: 27,
-    fontWeight: "900", letterSpacing: -0.65,
+    color: navy, fontSize: 24, lineHeight: 29,
+    fontFamily: typography.display, fontWeight: "800", letterSpacing: -0.5,
   },
   miniStatLabel: {
     color: subdued, fontSize: 10, lineHeight: 13,
