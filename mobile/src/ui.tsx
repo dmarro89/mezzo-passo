@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   navIconHighlight: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "#E8F0FF",
     borderRadius: 12,
   },
