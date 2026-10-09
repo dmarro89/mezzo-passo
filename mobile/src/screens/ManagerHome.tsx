@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Button, Screen } from "../ui";
 import { theme } from "../theme";
@@ -33,9 +33,6 @@ export function ManagerHome({
     .sort((a, b) =>
       new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
     )[0];
-  const attendanceAvailable = (stats.attendanceHistory?.length ?? 0) > 0;
-  const attendance = Math.max(0, Math.min(100, stats.attendanceRate));
-
   return (
     <Screen key="manager-home" withBottomNav>
       <View style={s.header}>
@@ -56,10 +53,16 @@ export function ManagerHome({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Aggiorna i dati"
+          accessibilityState={{ disabled: loading, busy: loading }}
+          disabled={loading}
           onPress={onRetry}
           style={({ pressed }) => [s.refresh, pressed && s.pressed]}
         >
-          <Ionicons name="refresh-outline" size={22} color={navy} />
+          {loading ? (
+            <ActivityIndicator size="small" color={blue} />
+          ) : (
+            <Ionicons name="refresh-outline" size={21} color={navy} />
+          )}
         </Pressable>
       </View>
 
@@ -71,6 +74,12 @@ export function ManagerHome({
           <Button title="Riprova" variant="secondary" onPress={onRetry} />
         </View>
       ) : null}
+
+      <StatsOverview
+        stats={stats}
+        loading={loading}
+        onPress={() => onNavigate("stats")}
+      />
 
       <View style={s.section}>
         <View style={s.sectionHeading}>
@@ -112,7 +121,7 @@ export function ManagerHome({
       </View>
 
       <View style={s.section}>
-        <Text style={s.sectionEyebrow}>TUTTO A PORTATA DI MANO</Text>
+        <Text style={s.sectionEyebrow}>ACCESSI RAPIDI</Text>
         <View style={s.shortcutRow}>
           <Shortcut
             title="Eventi"
@@ -132,68 +141,88 @@ export function ManagerHome({
         </View>
       </View>
 
-      <View style={s.section}>
-        <View style={s.sectionHeading}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.sectionEyebrow}>IL POLSO DELLA PARANZA</Text>
-            <Text style={s.sectionTitle}>La paranza, in numeri</Text>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => onNavigate("stats")}
-            style={s.inlineLink}
-          >
-            <Text style={s.inlineLinkText}>Dettagli</Text>
-            <Ionicons name="arrow-forward" size={15} color={blue} />
-          </Pressable>
+
+    </Screen>
+  );
+}
+
+function StatsOverview({
+  stats, loading, onPress,
+}: {
+  stats: Stats;
+  loading: boolean;
+  onPress: () => void;
+}) {
+  const hasResponses = (stats.attendanceHistory?.length ?? 0) > 0;
+  const value = Math.max(0, Math.min(100, stats.attendanceRate));
+  const percentage = loading || !hasResponses ? "—" : Math.round(value) + "%";
+
+  return (
+    <View style={s.overviewSection}>
+      <View style={s.overviewHeading}>
+        <Text style={s.sectionEyebrow}>LA PARANZA IN CIFRE</Text>
+        <View style={s.overviewLink}>
+          <Text style={s.inlineLinkText}>Statistiche</Text>
+          <Ionicons name="arrow-forward" size={14} color={blue} />
         </View>
-        <View style={s.attendanceCard}>
-          <View style={s.attendanceTop}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.attendanceEyebrow}>PRESENZA MEDIA</Text>
-              <Text style={s.attendanceValue}>
-                {loading || !attendanceAvailable ? "—" : Math.round(attendance) + "%"}
-              </Text>
-            </View>
-            <View style={s.attendanceIcon}>
-              <Ionicons name="pulse-outline" size={26} color="#FFFFFF" />
-            </View>
-          </View>
-          <View style={s.attendanceBar}>
-            <View
-              style={[
-                s.attendanceFill,
-                { width: ((loading || !attendanceAvailable ? 0 : attendance) + "%") as `${number}%` },
-              ]}
-            />
-          </View>
-          <Text style={s.attendanceHelp}>
-            {attendanceAvailable
-              ? "Media delle conferme di partecipazione agli eventi"
-              : "Disponibile dopo le prime risposte agli eventi"}
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Apri le statistiche della paranza"
+        onPress={onPress}
+        style={({ pressed }) => [s.overviewCard, pressed && s.pressed]}
+      >
+        <View style={s.overviewAttendance}>
+          <Text style={s.overviewAttendanceLabel}>PRESENZA MEDIA</Text>
+          <Text style={s.overviewAttendanceValue}>{percentage}</Text>
+          <Text style={s.overviewAttendanceNote}>
+            {hasResponses ? "Conferme RSVP" : "In attesa di risposte"}
           </Text>
         </View>
-        <View style={s.statsStrip}>
-          <StatItem
-            label="Cullatori"
+        <View style={s.overviewNumbers}>
+          <MiniStat
             value={loading ? "—" : stats.memberCount}
+            label="Cullatori"
             icon="people-outline"
           />
-          <View style={s.statDivider} />
-          <StatItem
-            label="Attivi"
+          <View style={s.overviewDivider} />
+          <MiniStat
             value={loading ? "—" : stats.activeMemberCount}
+            label="Attivi"
             icon="person-outline"
           />
-          <View style={s.statDivider} />
-          <StatItem
-            label="Eventi"
+          <View style={s.overviewDivider} />
+          <MiniStat
             value={loading ? "—" : stats.eventCount}
+            label="Eventi"
             icon="calendar-clear-outline"
           />
         </View>
-      </View>
-    </Screen>
+      </Pressable>
+    </View>
+  );
+}
+
+function MiniStat({
+  value, label, icon,
+}: {
+  value: string | number;
+  label: string;
+  icon: React.ComponentProps<typeof Ionicons>["name"];
+}) {
+  return (
+    <View style={s.miniStat}>
+      <Ionicons name={icon} size={16} color="#7290BE" />
+      <Text
+        style={s.miniStatValue}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.7}
+      >
+        {value}
+      </Text>
+      <Text style={s.miniStatLabel}>{label}</Text>
+    </View>
   );
 }
 
@@ -324,26 +353,11 @@ function Shortcut({
   );
 }
 
-function StatItem({
-  label, value, icon,
-}: {
-  label: string;
-  value: string | number;
-  icon: React.ComponentProps<typeof Ionicons>["name"];
-}) {
-  return (
-    <View style={s.stat}>
-      <Ionicons name={icon} size={18} color="#6381AF" />
-      <Text style={s.statValue}>{value}</Text>
-      <Text style={s.statLabel}>{label}</Text>
-    </View>
-  );
-}
 
 const s = StyleSheet.create({
   header: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,
-    marginTop: 7, marginBottom: 2,
+    marginTop: 3, marginBottom: 0,
   },
   headerCopy: { flex: 1, gap: 4 },
   eyebrow: {
@@ -351,10 +365,10 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 2.1,
   },
   greeting: {
-    color: navy, fontSize: 32, lineHeight: 38,
+    color: navy, fontSize: 30, lineHeight: 35,
     fontWeight: "900", letterSpacing: -1.15,
   },
-  headerSubtitle: { color: subdued, fontSize: 14, lineHeight: 20, fontWeight: "500" },
+  headerSubtitle: { color: subdued, fontSize: 13, lineHeight: 18, fontWeight: "500" },
   refresh: {
     marginTop: 7, height: 44, width: 44, borderRadius: 14,
     backgroundColor: "#FFFFFF", borderWidth: 1, borderColor: "#E6EDF7",
@@ -362,9 +376,9 @@ const s = StyleSheet.create({
   },
   pressed: { transform: [{ scale: 0.985 }], opacity: 0.8 },
   hero: {
-    backgroundColor: navy, borderRadius: 22,
-    paddingHorizontal: 21, paddingTop: 22, paddingBottom: 17,
-    overflow: "hidden", minHeight: 169, gap: 18,
+    backgroundColor: navy, borderRadius: 20,
+    paddingHorizontal: 19, paddingTop: 19, paddingBottom: 14,
+    overflow: "hidden", minHeight: 146, gap: 12,
   },
   heroStripeWide: {
     position: "absolute", top: -50, right: -26,
@@ -376,9 +390,9 @@ const s = StyleSheet.create({
     width: 28, height: 250, opacity: 0.19,
     transform: [{ rotate: "-22deg" }],
   },
-  heroMain: { flexDirection: "row", alignItems: "center", gap: 16 },
+  heroMain: { flexDirection: "row", alignItems: "center", gap: 14 },
   heroLogo: {
-    width: 75, height: 75, borderRadius: 18,
+    width: 67, height: 67, borderRadius: 16,
     backgroundColor: "#FFFFFF", borderWidth: 3, borderColor: "#FFFFFF",
     overflow: "hidden", alignItems: "center", justifyContent: "center",
   },
@@ -389,10 +403,10 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 2.1,
   },
   heroName: {
-    color: "#FFFFFF", fontSize: 26, lineHeight: 31,
+    color: "#FFFFFF", fontSize: 24, lineHeight: 29,
     fontWeight: "900", letterSpacing: -0.65,
   },
-  heroFooter: { gap: 12 },
+  heroFooter: { gap: 10 },
   heroRule: { height: StyleSheet.hairlineWidth, backgroundColor: "rgba(255,255,255,0.23)" },
   heroFooterRow: {
     flexDirection: "row", alignItems: "center",
@@ -411,7 +425,7 @@ const s = StyleSheet.create({
     backgroundColor: "#FFF5F7", padding: 14, gap: 10,
   },
   errorText: { color: "#AF3C51", fontSize: 14, lineHeight: 20 },
-  section: { gap: 13 },
+  section: { gap: 9 },
   sectionHeading: {
     flexDirection: "row", alignItems: "flex-end",
     justifyContent: "space-between", gap: 10,
@@ -421,7 +435,7 @@ const s = StyleSheet.create({
     fontWeight: "900", letterSpacing: 1.7, marginBottom: 2,
   },
   sectionTitle: {
-    color: navy, fontSize: 21, lineHeight: 27,
+    color: navy, fontSize: 20, lineHeight: 25,
     fontWeight: "900", letterSpacing: -0.55,
   },
   inlineLink: {
@@ -435,11 +449,11 @@ const s = StyleSheet.create({
     ...theme.shadow,
   },
   eventMain: {
-    flexDirection: "row", gap: 15, paddingHorizontal: 16,
-    paddingTop: 17, paddingBottom: 14,
+    flexDirection: "row", gap: 13, paddingHorizontal: 15,
+    paddingTop: 14, paddingBottom: 12,
   },
   eventDate: {
-    width: 66, minHeight: 89, backgroundColor: soft, borderRadius: 14,
+    width: 62, minHeight: 84, backgroundColor: soft, borderRadius: 13,
     alignItems: "center", justifyContent: "center",
   },
   eventWeekday: {
@@ -462,7 +476,7 @@ const s = StyleSheet.create({
   eventMetaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   eventMeta: { color: subdued, fontSize: 13, lineHeight: 18, flex: 1 },
   eventFooter: {
-    minHeight: 47, borderTopWidth: 1, borderTopColor: "#EDF1F7",
+    minHeight: 44, borderTopWidth: 1, borderTopColor: "#EDF1F7",
     paddingHorizontal: 16, flexDirection: "row",
     justifyContent: "space-between", alignItems: "center", gap: 8,
   },
@@ -481,57 +495,66 @@ const s = StyleSheet.create({
   },
   emptyTitle: { color: navy, fontSize: 15, fontWeight: "800", marginBottom: 3 },
   emptyText: { color: subdued, fontSize: 13, lineHeight: 19 },
-  shortcutRow: { flexDirection: "row", gap: 10 },
+  shortcutRow: { flexDirection: "row", gap: 9 },
   shortcut: {
-    flex: 1, minWidth: 0, minHeight: 112, backgroundColor: "#FFFFFF",
-    borderRadius: 17, borderWidth: 1, borderColor: "#E5ECF6",
-    padding: 12, gap: 8, justifyContent: "space-between", alignItems: "flex-start",
+    flex: 1, minWidth: 0, minHeight: 82, backgroundColor: "#FFFFFF",
+    borderRadius: 15, borderWidth: 1, borderColor: "#E5ECF6",
+    padding: 10, gap: 4, justifyContent: "space-between", alignItems: "flex-start",
   },
   shortcutIcon: {
-    height: 38, width: 38, borderRadius: 12, backgroundColor: "#EDF4FF",
+    height: 32, width: 32, borderRadius: 10, backgroundColor: "#EDF4FF",
     alignItems: "center", justifyContent: "center",
   },
   shortcutText: {
     color: navy, fontSize: 13, lineHeight: 17,
     fontWeight: "900", flexShrink: 1,
   },
-  attendanceCard: {
-    backgroundColor: "#1450AD", borderRadius: 20,
-    paddingHorizontal: 20, paddingVertical: 19, gap: 13, overflow: "hidden",
+  overviewSection: { gap: 7 },
+  overviewHeading: {
+    flexDirection: "row", alignItems: "center",
+    justifyContent: "space-between",
   },
-  attendanceTop: { flexDirection: "row", alignItems: "flex-start", gap: 12 },
-  attendanceEyebrow: {
-    color: "#D8E6FF", fontSize: 11, lineHeight: 15,
-    fontWeight: "900", letterSpacing: 1.5,
+  overviewLink: { flexDirection: "row", alignItems: "center", gap: 4 },
+  overviewCard: {
+    minHeight: 106, flexDirection: "row",
+    borderRadius: 17, overflow: "hidden",
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1, borderColor: "#E3EBF6",
+    ...theme.shadow,
   },
-  attendanceValue: {
-    color: "#FFFFFF", fontSize: 48, lineHeight: 55,
-    fontWeight: "900", letterSpacing: -1.9,
+  overviewAttendance: {
+    width: 121, backgroundColor: "#164DAC",
+    paddingHorizontal: 12, paddingVertical: 13,
+    justifyContent: "center",
   },
-  attendanceIcon: {
-    height: 45, width: 45, borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.17)",
-    justifyContent: "center", alignItems: "center",
+  overviewAttendanceLabel: {
+    color: "#DCEAFF", fontSize: 9, lineHeight: 13,
+    fontWeight: "900", letterSpacing: 0.8,
   },
-  attendanceBar: {
-    height: 6, backgroundColor: "rgba(255,255,255,0.28)",
-    borderRadius: 3, overflow: "hidden",
+  overviewAttendanceValue: {
+    color: "#FFFFFF", fontSize: 32, lineHeight: 38,
+    fontWeight: "900", letterSpacing: -1.25,
   },
-  attendanceFill: { height: "100%", borderRadius: 3, backgroundColor: "#FFFFFF" },
-  attendanceHelp: { color: "#D8E6FF", fontSize: 12, lineHeight: 17 },
-  statsStrip: {
-    borderRadius: 18, borderWidth: 1, borderColor: "#E4EBF6",
-    backgroundColor: "#FFFFFF", paddingHorizontal: 8,
-    minHeight: 113, flexDirection: "row", alignItems: "center",
+  overviewAttendanceNote: {
+    color: "#DBE9FF", fontSize: 10, lineHeight: 13,
   },
-  stat: { flex: 1, alignItems: "center", justifyContent: "center", gap: 5 },
-  statDivider: { width: 1, height: 56, backgroundColor: "#E7EDF6" },
-  statValue: {
-    color: navy, fontSize: 29, lineHeight: 33,
-    fontWeight: "900", letterSpacing: -0.8,
+  overviewNumbers: {
+    flex: 1, minWidth: 0, flexDirection: "row",
+    alignItems: "center", paddingHorizontal: 2,
   },
-  statLabel: {
-    color: subdued, fontSize: 12, lineHeight: 16,
-    fontWeight: "700", textAlign: "center",
+  overviewDivider: {
+    width: 1, height: 49, backgroundColor: "#E9EEF7",
+  },
+  miniStat: {
+    flex: 1, minWidth: 0, alignItems: "center",
+    justifyContent: "center", gap: 5, paddingHorizontal: 1,
+  },
+  miniStatValue: {
+    color: navy, fontSize: 24, lineHeight: 27,
+    fontWeight: "900", letterSpacing: -0.65,
+  },
+  miniStatLabel: {
+    color: subdued, fontSize: 10, lineHeight: 13,
+    textAlign: "center", fontWeight: "700",
   },
 });
