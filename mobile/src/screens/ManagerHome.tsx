@@ -163,7 +163,7 @@ export function ManagerHome({
             <View
               style={[
                 s.attendanceFill,
-                { width: (loading || !attendanceAvailable ? 0 : attendance) + "%" },
+                { width: ((loading || !attendanceAvailable ? 0 : attendance) + "%") as `${number}%` },
               ]}
             />
           </View>
