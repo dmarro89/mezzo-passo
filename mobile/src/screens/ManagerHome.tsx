@@ -35,6 +35,7 @@ export function ManagerHome({
     )[0];
   return (
     <Screen key="manager-home" withBottomNav>
+      <View style={s.homeStack}>
       <View style={s.header}>
         <View style={s.headerCopy}>
           <Text style={s.eyebrow}>IL TUO SPAZIO</Text>
@@ -141,7 +142,7 @@ export function ManagerHome({
         </View>
       </View>
 
-
+      </View>
     </Screen>
   );
 }
@@ -360,6 +361,7 @@ function Shortcut({
 
 
 const s = StyleSheet.create({
+  homeStack: { gap: 14, paddingBottom: 4 },
   header: {
     flexDirection: "row", alignItems: "flex-start", gap: 12,
     marginTop: 3, marginBottom: 0,
