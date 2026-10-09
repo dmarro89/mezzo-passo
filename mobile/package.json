@@ -15,7 +15,7 @@
     "react": "19.2.3",
     "react-native": "0.86.0",
     "@expo/vector-icons": "^15.0.3",
-    "expo-image-picker": "^17.0.8"
+    "expo-image-picker": "~57.0.17"
   },
   "devDependencies": {
     "@types/react": "^19.2.0",
