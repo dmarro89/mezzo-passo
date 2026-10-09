@@ -161,10 +161,15 @@ function StatsOverview({
     <View style={s.overviewSection}>
       <View style={s.overviewHeading}>
         <Text style={s.sectionEyebrow}>LA PARANZA IN CIFRE</Text>
-        <View style={s.overviewLink}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Apri statistiche"
+          onPress={onPress}
+          style={s.overviewLink}
+        >
           <Text style={s.inlineLinkText}>Statistiche</Text>
           <Ionicons name="arrow-forward" size={14} color={blue} />
-        </View>
+        </Pressable>
       </View>
       <Pressable
         accessibilityRole="button"
